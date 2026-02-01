@@ -133,12 +133,13 @@ export async function POST(request: NextRequest) {
         const filename = `${uuidv4()}.${ext}`;
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
-        const uploadPath = path.join(
-          process.cwd(),
-          "public",
-          "uploads",
-          filename
-        );
+        const uploadDir = process.env.VERCEL
+          ? path.join("/tmp", "uploads")
+          : path.join(process.cwd(), "public", "uploads");
+        // Ensure directory exists
+        const { mkdir } = await import("fs/promises");
+        await mkdir(uploadDir, { recursive: true });
+        const uploadPath = path.join(uploadDir, filename);
         await writeFile(uploadPath, buffer);
         imageUrl = `/uploads/${filename}`;
       } else if (urlField) {
@@ -174,8 +175,18 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      imageUrl = body.image_url;
-      caption = body.caption || "";
+      // Validate image URL
+      if (
+        typeof body.image_url !== "string" ||
+        !body.image_url.match(/^https?:\/\/.+/)
+      ) {
+        return NextResponse.json(
+          { error: "image_url must be a valid HTTP(S) URL" },
+          { status: 400 }
+        );
+      }
+      imageUrl = body.image_url.slice(0, 2000); // Max URL length
+      caption = (body.caption || "").slice(0, 1000); // Max caption length
       if (body.tags) {
         tags = Array.isArray(body.tags)
           ? JSON.stringify(body.tags)
