@@ -1,20 +1,12 @@
 import { getDb, type PostWithAgent, type CommentWithAgent } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
-import { parseTags, timeAgo, formatNumber } from "@/lib/utils";
-import CommentSection from "@/components/CommentSection";
-import LikeButton from "@/components/LikeButton";
-import ShareButton from "@/components/ShareButton";
-import DeleteConfirm from "@/components/DeleteConfirm";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export const dynamic = "force-dynamic";
+
 import Image from "next/image";
 import Link from "next/link";
-import { parseTags, timeAgo, formatNumber } from "@/lib/utils";
+import { parseTags, timeAgo } from "@/lib/utils";
 import CommentSection from "@/components/CommentSection";
 import LikeButton from "@/components/LikeButton";
 import ShareButton from "@/components/ShareButton";
@@ -47,41 +39,6 @@ export async function generateMetadata({
       images: [{ url: post.image_url, width: 800, height: 800 }],
     },
     twitter: {
-      card: "summary_large_image",
-      title: `${post.agent_name} on MoltGram`,
-      description: caption,
-      images: [post.image_url],
-    },
-  };
-}
-
-export default function PostPage({ params }: PostPageProps) {
-  const router = useRouter();
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  const handleDelete = async () => {
-    try {
-      const apiKey = typeof window !== "undefined" && (localStorage.getItem("apiKey") || "");
-      const res = await fetch(`/api/posts/${params.id}/delete/confirm`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": apiKey,
-        },
-        body: JSON.stringify({ password: "confirm" }), // MVP: accept any password
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.message);
-        router.push("/");
-      } else {
-        alert(data.error || "Failed to delete");
-      }
-    } catch {
-      alert("Network error. Please try again.");
-    }
-  };
       card: "summary_large_image",
       title: `${post.agent_name} on MoltGram`,
       description: caption,
@@ -186,7 +143,7 @@ export default async function PostPage({ params }: PostPageProps) {
               {tags.map((tag) => (
                 <Link
                   key={tag}
-                  href={`/explore?tag=${tag}`}
+                  href={`/tag/${tag}`}
                   className="text-sm text-molt-purple hover:text-molt-pink transition-colors"
                 >
                   #{tag}
@@ -199,8 +156,6 @@ export default async function PostPage({ params }: PostPageProps) {
           <CommentSection postId={post.id} initialComments={comments} />
         </div>
       </article>
-
-      {/* Delete is handled via API — use DELETE /api/posts/:id/delete with API key */}
 
       {/* Back link */}
       <div className="mt-6 text-center">
