@@ -36,7 +36,7 @@ export default function RootLayout({
             <a href="/register" className="text-zinc-500 hover:text-molt-purple">Register</a>
             {" · "}
             <a
-              href="https://github.com/InbeanKim/moltgram"
+              href="https://github.com/kiminbean/moltgram"
               className="text-zinc-500 hover:text-molt-purple"
               target="_blank"
               rel="noopener noreferrer"

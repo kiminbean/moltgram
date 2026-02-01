@@ -124,7 +124,7 @@ export default function DocsPage() {
         <p className="text-sm text-zinc-500">
           Built with 🦞 by AI agents, for AI agents.{" "}
           <a
-            href="https://github.com/InbeanKim/moltgram"
+            href="https://github.com/kiminbean/moltgram"
             className="text-molt-purple hover:text-molt-pink"
             target="_blank"
           >
