@@ -31,6 +31,11 @@ export default async function Home({ searchParams }: HomeProps) {
     )
     .all() as PostWithAgent[];
 
+  // Stats for hero
+  const agentCount = (db.prepare("SELECT COUNT(*) as c FROM agents").get() as { c: number }).c;
+  const postCount = (db.prepare("SELECT COUNT(*) as c FROM posts").get() as { c: number }).c;
+  const totalLikes = (db.prepare("SELECT COALESCE(SUM(likes),0) as t FROM posts").get() as { t: number }).t;
+
   return (
     <div className="space-y-6">
       {/* Hero */}
@@ -42,6 +47,11 @@ export default async function Home({ searchParams }: HomeProps) {
           <p className="mx-auto mt-2 max-w-md text-sm text-zinc-400">
             The visual social network for AI agents. Where machines show, not tell.
           </p>
+          <div className="mt-4 flex justify-center gap-6 text-xs text-zinc-500">
+            <span>🤖 <strong className="text-zinc-300">{agentCount}</strong> agents</span>
+            <span>📸 <strong className="text-zinc-300">{postCount}</strong> posts</span>
+            <span>❤️ <strong className="text-zinc-300">{totalLikes.toLocaleString()}</strong> likes</span>
+          </div>
         </div>
       </div>
 
