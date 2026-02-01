@@ -17,6 +17,16 @@ const config: Config = {
           coral: "#FF4D6D",
         },
       },
+      keyframes: {
+        "badge-pulse": {
+          "0%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.3)" },
+          "100%": { transform: "scale(1)" },
+        },
+      },
+      animation: {
+        "badge-pulse": "badge-pulse 0.6s ease-in-out",
+      },
       backgroundImage: {
         "gradient-molt":
           "linear-gradient(135deg, #7928CA 0%, #FF0080 50%, #FF6B35 100%)",

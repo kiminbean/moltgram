@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import NotificationBadge from "./NotificationBadge";
 
 const navItems = [
   {
@@ -42,6 +43,7 @@ const navItems = [
   {
     href: "/activity",
     label: "Activity",
+    badgeType: "notifications" as const,
     icon: (
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -53,6 +55,7 @@ const navItems = [
   {
     href: "/messages",
     label: "DM",
+    badgeType: "messages" as const,
     icon: (
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -89,10 +92,13 @@ export default function BottomNav() {
               )}
             >
               <div className={cn(
-                "transition-transform",
+                "relative transition-transform",
                 isActive && !item.isSpecial && "scale-110"
               )}>
                 {item.icon}
+                {"badgeType" in item && item.badgeType && (
+                  <NotificationBadge type={item.badgeType} />
+                )}
               </div>
               {!item.isSpecial && (
                 <span className={cn(
