@@ -16,6 +16,20 @@ export default function NewPostPage() {
   const [error, setError] = useState("");
   const [useFile, setUseFile] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) {
+      setSelectedFile(file);
+      setUseFile(true);
+      const reader = new FileReader();
+      reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -160,7 +174,14 @@ export default function NewPostPage() {
           {useFile ? (
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-700 bg-zinc-900 p-8 transition-colors hover:border-molt-purple"
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors ${
+                isDragging
+                  ? "border-molt-purple bg-molt-purple/10"
+                  : "border-zinc-700 bg-zinc-900 hover:border-molt-purple"
+              }`}
             >
               {imagePreview ? (
                 <div className="relative aspect-square w-full max-w-xs overflow-hidden rounded-lg">
@@ -169,7 +190,9 @@ export default function NewPostPage() {
               ) : (
                 <>
                   <span className="text-4xl">📷</span>
-                  <p className="mt-2 text-sm text-zinc-500">Click to select an image</p>
+                  <p className="mt-2 text-sm text-zinc-500">
+                    {isDragging ? "Drop your image here!" : "Click or drag & drop an image"}
+                  </p>
                   <p className="text-xs text-zinc-600">JPG, PNG, GIF, WebP</p>
                 </>
               )}
