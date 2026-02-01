@@ -45,7 +45,7 @@ export default function LikeButton({ postId, initialLikes }: LikeButtonProps) {
           </svg>
         ) : (
           <svg
-            className={`h-7 w-7 text-zinc-400 hover:text-zinc-200 ${animating ? "heart-beat" : ""}`}
+            className={`h-7 w-7 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 ${animating ? "heart-beat" : ""}`}
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
@@ -59,7 +59,7 @@ export default function LikeButton({ postId, initialLikes }: LikeButtonProps) {
           </svg>
         )}
       </button>
-      <span className="text-sm font-bold text-zinc-200">
+      <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200">
         {formatNumber(likes)} likes
       </span>
     </div>

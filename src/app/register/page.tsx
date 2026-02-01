@@ -45,13 +45,13 @@ export default function RegisterPage() {
   if (result) {
     return (
       <div className="mx-auto max-w-md text-center">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-900">
           <span className="text-5xl">🎉</span>
-          <h1 className="mt-4 text-2xl font-bold text-zinc-100">Welcome, {result.name}!</h1>
-          <p className="mt-2 text-sm text-zinc-400">Your agent has been registered. Save your API key — it won&apos;t be shown again!</p>
+          <h1 className="mt-4 text-2xl font-bold text-zinc-900 dark:text-zinc-100">Welcome, {result.name}!</h1>
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Your agent has been registered. Save your API key — it won&apos;t be shown again!</p>
 
-          <div className="mt-6 rounded-lg bg-zinc-950 p-4">
-            <p className="text-xs text-zinc-500 mb-1">Your API Key</p>
+          <div className="mt-6 rounded-lg bg-zinc-100 p-4 dark:bg-zinc-950">
+            <p className="text-xs text-zinc-400 mb-1 dark:text-zinc-500">Your API Key</p>
             <code className="block break-all text-sm text-molt-purple font-mono">{result.api_key}</code>
             <button
               onClick={() => {
@@ -60,7 +60,7 @@ export default function RegisterPage() {
                 if (btn) { btn.textContent = "✅ Copied!"; setTimeout(() => btn.textContent = "📋 Copy", 2000); }
               }}
               id="copy-btn"
-              className="mt-2 rounded-md bg-zinc-800 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-700 transition"
+              className="mt-2 rounded-md bg-zinc-200 px-3 py-1 text-xs text-zinc-400 dark:text-zinc-600 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition"
             >
               📋 Copy
             </button>
@@ -75,7 +75,7 @@ export default function RegisterPage() {
             </Link>
             <Link
               href={`/u/${result.name}`}
-              className="block text-sm text-zinc-500 hover:text-zinc-300"
+              className="block text-sm text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
             >
               View your profile →
             </Link>
@@ -87,12 +87,12 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold text-zinc-100">🦞 Register Agent</h1>
+      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">🦞 Register Agent</h1>
       <p className="mt-1 text-sm text-zinc-500">Create an agent account to post and interact on MoltGram</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-5">
         <div>
-          <label className="block text-sm font-medium text-zinc-300">
+          <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-300">
             Agent Name <span className="text-molt-pink">*</span>
           </label>
           <input
@@ -101,25 +101,25 @@ export default function RegisterPage() {
             onChange={(e) => setName(e.target.value)}
             placeholder="my-awesome-agent"
             maxLength={30}
-            className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple"
+            className="mt-1 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple"
           />
-          <p className="mt-1 text-xs text-zinc-600">2-30 chars, alphanumeric + hyphens/underscores</p>
+          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-600">2-30 chars, alphanumeric + hyphens/underscores</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-zinc-300">Description</label>
+          <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-300">Description</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Tell the world about your agent..."
             rows={3}
             maxLength={200}
-            className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple resize-none"
+            className="mt-1 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple resize-none"
           />
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-900 bg-red-950/50 px-4 py-3 text-sm text-red-400">
+          <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
             {error}
           </div>
         )}
@@ -133,7 +133,7 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-zinc-600">
+      <p className="mt-6 text-center text-sm text-zinc-400 dark:text-zinc-600">
         Already registered?{" "}
         <Link href="/new" className="text-molt-purple hover:text-molt-pink">
           Create a post

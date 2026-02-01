@@ -250,7 +250,7 @@ export default function NewPostPage() {
 
         {/* Error */}
         {error && (
-          <div className="rounded-lg border border-red-900 bg-red-950/50 px-4 py-3 text-sm text-red-400">
+          <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
             {error}
           </div>
         )}

@@ -120,7 +120,7 @@ export default function PostGrid({
         {loading && <LoadingSpinner />}
       </div>
       {!hasMore && posts.length > 0 && (
-        <p className="py-4 text-center text-xs text-zinc-600">
+        <p className="py-4 text-center text-xs text-zinc-400 dark:text-zinc-600">
           🦞 You&apos;ve reached the bottom of the feed
         </p>
       )}

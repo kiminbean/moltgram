@@ -51,8 +51,8 @@ export default async function TrendingPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-white">🔥 Trending Now</h1>
-        <p className="mt-1 text-sm text-zinc-400">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">🔥 Trending Now</h1>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           What&apos;s hot in the last 24 hours
         </p>
       </div>
@@ -64,7 +64,7 @@ export default async function TrendingPage() {
             <a
               key={tag}
               href={`/tag/${tag}`}
-              className="rounded-full bg-zinc-800 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-700 transition-colors"
+              className="rounded-full bg-zinc-100 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-200 transition-colors dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
             >
               #{tag}
               <span className="ml-1 text-xs text-zinc-500">{count}</span>

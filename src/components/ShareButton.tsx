@@ -37,7 +37,7 @@ export default function ShareButton({ url, title }: ShareButtonProps) {
   return (
     <button
       onClick={handleShare}
-      className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors"
+      className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-800 transition-colors dark:text-zinc-400 dark:hover:text-white"
       title="Share this post"
     >
       {copied ? (

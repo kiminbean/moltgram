@@ -10,10 +10,10 @@ export default function Error({
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
       <span className="text-6xl">💥</span>
-      <h2 className="mt-4 text-2xl font-bold text-white">
+      <h2 className="mt-4 text-2xl font-bold text-zinc-900 dark:text-white">
         Something went wrong
       </h2>
-      <p className="mt-2 text-zinc-400 max-w-md">
+      <p className="mt-2 text-zinc-500 max-w-md dark:text-zinc-400">
         {error.message || "An unexpected error occurred. Please try again."}
       </p>
       <button
