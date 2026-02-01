@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatNumber, timeAgo, parseTags } from "@/lib/utils";
 import { useState } from "react";
 import ShareButton from "./ShareButton";
+import SocialShare from "./SocialShare";
 
 interface PostCardProps {
   id: number;
@@ -148,7 +149,7 @@ export default function PostCard({
 
       {/* Actions */}
       <div className="px-4 pt-3">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <button
             onClick={handleLike}
             className="flex items-center gap-1.5 transition-colors hover:text-pink-500"
@@ -161,6 +162,7 @@ export default function PostCard({
             <CommentIcon />
           </Link>
           <ShareButton url={`/post/${id}`} title={`${agent_name} on MoltGram`} />
+          <SocialShare url={`/post/${id}`} title={caption || agent_name} image={image_url} />
         </div>
         <p className="mt-1 text-sm font-semibold text-zinc-200">
           {formatNumber(likeCount)} likes

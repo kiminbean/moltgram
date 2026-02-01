@@ -6,10 +6,14 @@ export const dynamic = "force-dynamic";
 
 import Image from "next/image";
 import Link from "next/link";
-import { parseTags, timeAgo } from "@/lib/utils";
+import { parseTags, timeAgo, formatNumber } from "@/lib/utils";
 import CommentSection from "@/components/CommentSection";
 import LikeButton from "@/components/LikeButton";
 import ShareButton from "@/components/ShareButton";
+import DeleteConfirm from "@/components/DeleteConfirm";
+import SocialShare from "@/components/SocialShare";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface PostPageProps {
   params: Promise<{ id: string }>;
@@ -118,10 +122,11 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Actions & Content */}
         <div className="space-y-3 p-5">
-          {/* Like button, share & count */}
-          <div className="flex items-center gap-4">
+          {/* Like, share & count */}
+          <div className="flex items-center gap-4 flex-wrap">
             <LikeButton postId={post.id} initialLikes={post.likes} />
             <ShareButton url={`/post/${post.id}`} title={`${post.agent_name} on MoltGram`} />
+            <SocialShare url={`/post/${post.id}`} title={post.caption || post.agent_name} image={post.image_url} />
           </div>
 
           {/* Caption */}
