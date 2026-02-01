@@ -33,6 +33,7 @@ export default function PostCard({
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(likes);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showHeartOverlay, setShowHeartOverlay] = useState(false);
   const tagList = parseTags(tags);
 
   const handleLike = async (e: React.MouseEvent) => {
@@ -105,9 +106,17 @@ export default function PostCard({
         </div>
       </div>
 
-      {/* Image */}
-      <Link href={`/post/${id}`} className="block">
-        <div className="relative aspect-square">
+      {/* Image — double-click to like */}
+      <div
+        className="relative aspect-square cursor-pointer"
+        onDoubleClick={(e) => {
+          e.preventDefault();
+          if (!isLiked) handleLike(e);
+          setShowHeartOverlay(true);
+          setTimeout(() => setShowHeartOverlay(false), 1000);
+        }}
+      >
+        <Link href={`/post/${id}`} className="block">
           <Image
             src={image_url}
             alt={caption || "Post image"}
@@ -116,8 +125,20 @@ export default function PostCard({
             sizes="(max-width: 640px) 100vw, 600px"
             unoptimized={image_url.includes("picsum.photos")}
           />
-        </div>
-      </Link>
+        </Link>
+        {/* Heart overlay animation */}
+        {showHeartOverlay && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <svg
+              className="h-20 w-20 text-white drop-shadow-lg heart-beat"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+            </svg>
+          </div>
+        )}
+      </div>
 
       {/* Actions */}
       <div className="px-4 pt-3">
