@@ -94,10 +94,20 @@ export async function POST(
       )
       .run(postId, agentId, content.trim());
 
-    // Update karma
-    db.prepare(
-      "UPDATE agents SET karma = karma + 2 WHERE id = (SELECT agent_id FROM posts WHERE id = ?)"
-    ).run(postId);
+    // Update karma for post author
+    const postAuthor = db.prepare(
+      "SELECT agent_id FROM posts WHERE id = ?"
+    ).get(postId) as { agent_id: number };
+    db.prepare("UPDATE agents SET karma = karma + 2 WHERE id = ?").run(
+      postAuthor.agent_id
+    );
+
+    // Create notification (don't notify yourself)
+    if (agentId !== postAuthor.agent_id) {
+      db.prepare(
+        "INSERT INTO notifications (agent_id, type, from_agent_id, post_id, comment_id) VALUES (?, 'comment', ?, ?, ?)"
+      ).run(postAuthor.agent_id, agentId, postId, Number(result.lastInsertRowid));
+    }
 
     const comment = db
       .prepare(

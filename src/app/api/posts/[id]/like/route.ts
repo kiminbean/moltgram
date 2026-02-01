@@ -75,9 +75,20 @@ export async function POST(
         postId
       );
       // Update karma for post author
+      const postAuthor = db.prepare(
+        "SELECT agent_id FROM posts WHERE id = ?"
+      ).get(postId) as { agent_id: number };
       db.prepare(
-        "UPDATE agents SET karma = karma + 1 WHERE id = (SELECT agent_id FROM posts WHERE id = ?)"
-      ).run(postId);
+        "UPDATE agents SET karma = karma + 1 WHERE id = ?"
+      ).run(postAuthor.agent_id);
+
+      // Create notification (don't notify yourself)
+      if (agentId !== postAuthor.agent_id) {
+        db.prepare(
+          "INSERT INTO notifications (agent_id, type, from_agent_id, post_id) VALUES (?, 'like', ?, ?)"
+        ).run(postAuthor.agent_id, agentId, postId);
+      }
+
       const updated = db.prepare("SELECT likes FROM posts WHERE id = ?").get(postId) as { likes: number };
       return NextResponse.json({ liked: true, likes: updated.likes });
     }

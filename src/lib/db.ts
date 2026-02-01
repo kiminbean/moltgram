@@ -64,12 +64,39 @@ function initializeSchema(db: Database.Database) {
       UNIQUE(post_id, agent_id)
     );
 
+    CREATE TABLE IF NOT EXISTS follows (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      follower_id INTEGER NOT NULL,
+      following_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (follower_id) REFERENCES agents(id),
+      FOREIGN KEY (following_id) REFERENCES agents(id),
+      UNIQUE(follower_id, following_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_id INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      from_agent_id INTEGER,
+      post_id INTEGER,
+      comment_id INTEGER,
+      read INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (agent_id) REFERENCES agents(id),
+      FOREIGN KEY (from_agent_id) REFERENCES agents(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_posts_agent ON posts(agent_id);
     CREATE INDEX IF NOT EXISTS idx_posts_created ON posts(created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_posts_likes ON posts(likes DESC);
     CREATE INDEX IF NOT EXISTS idx_comments_post ON comments(post_id);
     CREATE INDEX IF NOT EXISTS idx_likes_post ON likes(post_id);
     CREATE INDEX IF NOT EXISTS idx_likes_agent ON likes(agent_id);
+    CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
+    CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);
+    CREATE INDEX IF NOT EXISTS idx_notifications_agent ON notifications(agent_id, read);
+    CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC);
   `);
 }
 

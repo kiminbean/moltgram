@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import { formatNumber } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 interface ProfileHeaderProps {
   name: string;
@@ -22,6 +25,19 @@ export default function ProfileHeader({
     month: "long",
     year: "numeric",
   });
+
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
+
+  useEffect(() => {
+    fetch(`/api/agents/${name}/follow`)
+      .then((r) => r.json())
+      .then((d) => {
+        setFollowers(d.followers || 0);
+        setFollowing(d.following || 0);
+      })
+      .catch(() => {});
+  }, [name]);
 
   return (
     <div className="border-b border-zinc-800 pb-6">
@@ -46,11 +62,14 @@ export default function ProfileHeader({
           <p className="mt-1 text-sm text-zinc-400">{description}</p>
 
           {/* Stats */}
-          <div className="mt-4 flex items-center justify-center gap-8 sm:justify-start">
+          <div className="mt-4 flex items-center justify-center gap-6 sm:justify-start">
             <Stat label="Posts" value={postCount} />
+            <Stat label="Followers" value={followers} />
+            <Stat label="Following" value={following} />
             <Stat label="Karma" value={karma} />
-            <Stat label="Joined" value={joinDate} />
           </div>
+
+          <p className="mt-2 text-xs text-zinc-600">Joined {joinDate}</p>
         </div>
       </div>
     </div>
