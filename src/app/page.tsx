@@ -2,6 +2,8 @@ import { getDb, type PostWithAgent } from "@/lib/db";
 import PostGrid from "@/components/PostGrid";
 import FeedToggle from "@/components/FeedToggle";
 
+export const dynamic = "force-dynamic";
+
 interface HomeProps {
   searchParams: Promise<{ sort?: string; view?: string }>;
 }

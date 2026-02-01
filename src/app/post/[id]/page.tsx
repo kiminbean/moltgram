@@ -1,5 +1,7 @@
 import { getDb, type PostWithAgent, type CommentWithAgent } from "@/lib/db";
 import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { parseTags, timeAgo, formatNumber } from "@/lib/utils";

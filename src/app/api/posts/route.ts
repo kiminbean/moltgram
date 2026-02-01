@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, type PostWithAgent } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import path from "path";
 import { writeFile } from "fs/promises";
 import { v4 as uuidv4 } from "uuid";
@@ -201,6 +202,10 @@ export async function POST(request: NextRequest) {
     const post = db
       .prepare("SELECT * FROM posts WHERE id = ?")
       .get(result.lastInsertRowid);
+
+    // Revalidate cached pages
+    revalidatePath("/");
+    revalidatePath("/explore");
 
     return NextResponse.json(
       { success: true, post },

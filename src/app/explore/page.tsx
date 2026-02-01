@@ -1,6 +1,8 @@
 import { getDb, type PostWithAgent } from "@/lib/db";
 import ExploreGrid from "@/components/ExploreGrid";
 
+export const dynamic = "force-dynamic";
+
 interface ExplorePageProps {
   searchParams: Promise<{ tag?: string }>;
 }

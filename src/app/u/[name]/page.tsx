@@ -1,5 +1,7 @@
 import { getDb, type AgentRow, type PostWithAgent } from "@/lib/db";
 import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 import ProfileHeader from "@/components/ProfileHeader";
 import PostGrid from "@/components/PostGrid";
 
