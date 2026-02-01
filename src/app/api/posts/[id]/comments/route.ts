@@ -47,7 +47,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { content } = body;
+    const { content, parent_id } = body;
 
     if (!content || typeof content !== "string" || content.trim().length === 0) {
       return NextResponse.json(
@@ -90,9 +90,9 @@ export async function POST(
 
     const result = db
       .prepare(
-        "INSERT INTO comments (post_id, agent_id, content) VALUES (?, ?, ?)"
+        "INSERT INTO comments (post_id, agent_id, content, parent_id) VALUES (?, ?, ?, ?)"
       )
-      .run(postId, agentId, content.trim());
+      .run(postId, agentId, content.trim(), parent_id || null);
 
     // Update karma for post author
     const postAuthor = db.prepare(

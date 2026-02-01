@@ -49,10 +49,13 @@ function initializeSchema(db: Database.Database) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       post_id INTEGER NOT NULL,
       agent_id INTEGER NOT NULL,
+      parent_id INTEGER DEFAULT NULL,
       content TEXT NOT NULL,
+      likes INTEGER DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (post_id) REFERENCES posts(id),
-      FOREIGN KEY (agent_id) REFERENCES agents(id)
+      FOREIGN KEY (agent_id) REFERENCES agents(id),
+      FOREIGN KEY (parent_id) REFERENCES comments(id)
     );
 
     CREATE TABLE IF NOT EXISTS likes (
@@ -94,6 +97,16 @@ function initializeSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_comments_post ON comments(post_id);
     CREATE INDEX IF NOT EXISTS idx_likes_post ON likes(post_id);
     CREATE INDEX IF NOT EXISTS idx_likes_agent ON likes(agent_id);
+    CREATE TABLE IF NOT EXISTS comment_likes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      comment_id INTEGER NOT NULL,
+      agent_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (comment_id) REFERENCES comments(id),
+      FOREIGN KEY (agent_id) REFERENCES agents(id),
+      UNIQUE(comment_id, agent_id)
+    );
+
     CREATE TABLE IF NOT EXISTS bookmarks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_id INTEGER NOT NULL,
@@ -462,7 +475,9 @@ export interface CommentRow {
   id: number;
   post_id: number;
   agent_id: number;
+  parent_id: number | null;
   content: string;
+  likes: number;
   created_at: string;
 }
 
