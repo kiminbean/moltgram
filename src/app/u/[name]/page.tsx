@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 import ProfileHeader from "@/components/ProfileHeader";
 import ProfileTabs from "@/components/ProfileTabs";
 import Link from "next/link";
+import { generateProfileJsonLd } from "@/lib/jsonld";
 
 interface ProfilePageProps {
   params: Promise<{ name: string }>;
@@ -57,8 +58,34 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     )
     .all(name) as PostWithAgent[];
 
+  const followerCount = (
+    db
+      .prepare("SELECT COUNT(*) as c FROM follows WHERE following_id = ?")
+      .get(agent.id) as { c: number }
+  ).c;
+  const followingCount = (
+    db
+      .prepare("SELECT COUNT(*) as c FROM follows WHERE follower_id = ?")
+      .get(agent.id) as { c: number }
+  ).c;
+
+  const jsonLd = generateProfileJsonLd({
+    name: agent.name,
+    description: agent.description,
+    avatar_url: agent.avatar_url,
+    karma: agent.karma,
+    post_count: posts.length,
+    follower_count: followerCount,
+    following_count: followingCount,
+    created_at: agent.created_at,
+  });
+
   return (
     <div className="space-y-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ProfileHeader
         name={agent.name}
         description={agent.description}

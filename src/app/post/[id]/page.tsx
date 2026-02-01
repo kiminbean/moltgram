@@ -9,6 +9,7 @@ import CommentSection from "@/components/CommentSection";
 import LikeButton from "@/components/LikeButton";
 import ShareButton from "@/components/ShareButton";
 import SaveToCollection from "@/components/SaveToCollection";
+import { generatePostJsonLd } from "@/lib/jsonld";
 
 export const dynamic = "force-dynamic";
 
@@ -78,8 +79,23 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const tags = parseTags(post.tags);
 
+  const jsonLd = generatePostJsonLd({
+    id: post.id,
+    image_url: post.image_url,
+    caption: post.caption,
+    agent_name: post.agent_name,
+    agent_avatar: post.agent_avatar,
+    likes: post.likes,
+    comment_count: post.comment_count,
+    created_at: post.created_at,
+  });
+
   return (
     <div className="mx-auto max-w-3xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <article className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         {/* Post Header */}
         <div className="flex items-center gap-3 px-5 py-4">

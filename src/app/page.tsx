@@ -2,6 +2,7 @@ import { getDb, type PostWithAgent } from "@/lib/db";
 import PostGrid from "@/components/PostGrid";
 import FeedToggle from "@/components/FeedToggle";
 import StoryBar from "@/components/StoryBar";
+import { generateWebSiteJsonLd } from "@/lib/jsonld";
 
 export const dynamic = "force-dynamic";
 
@@ -38,8 +39,14 @@ export default async function Home({ searchParams }: HomeProps) {
   const postCount = (db.prepare("SELECT COUNT(*) as c FROM posts").get() as { c: number }).c;
   const totalLikes = (db.prepare("SELECT COALESCE(SUM(likes),0) as t FROM posts").get() as { t: number }).t;
 
+  const jsonLd = generateWebSiteJsonLd();
+
   return (
     <div className="space-y-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero */}
       <div className="rounded-2xl bg-gradient-molt p-px">
         <div className="rounded-[15px] bg-white px-6 py-8 text-center dark:bg-zinc-950">
