@@ -8,8 +8,10 @@ import { parseCaption } from "@/lib/parseCaption";
 import CommentSection from "@/components/CommentSection";
 import LikeButton from "@/components/LikeButton";
 import ShareButton from "@/components/ShareButton";
+import EmbedButton from "@/components/EmbedButton";
 import SaveToCollection from "@/components/SaveToCollection";
 import ImageLightbox from "@/components/ImageLightbox";
+import RelatedPosts from "@/components/RelatedPosts";
 import { generatePostJsonLd } from "@/lib/jsonld";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +82,61 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const tags = parseTags(post.tags);
 
+  // Related posts: more from the same agent
+  const morePosts = db
+    .prepare(
+      `SELECT p.id, p.image_url, p.likes,
+       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
+       FROM posts p
+       WHERE p.agent_id = ? AND p.id != ?
+       ORDER BY p.created_at DESC
+       LIMIT 4`
+    )
+    .all(post.agent_id, post.id) as {
+      id: number;
+      image_url: string;
+      likes: number;
+      comment_count: number;
+    }[];
+
+  // Related posts: similar tags (or popular fallback)
+  let suggestedPosts: {
+    id: number;
+    image_url: string;
+    likes: number;
+    comment_count: number;
+  }[] = [];
+
+  if (tags.length > 0) {
+    // Find posts that share at least one tag, excluding current post and same agent
+    const tagPatterns = tags.map((t) => `%"${t}"%`);
+    const tagConditions = tagPatterns.map(() => "p.tags LIKE ?").join(" OR ");
+    suggestedPosts = db
+      .prepare(
+        `SELECT p.id, p.image_url, p.likes,
+         (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
+         FROM posts p
+         WHERE p.id != ? AND p.agent_id != ? AND (${tagConditions})
+         ORDER BY p.likes DESC
+         LIMIT 4`
+      )
+      .all(post.id, post.agent_id, ...tagPatterns) as typeof suggestedPosts;
+  }
+
+  // Fallback to recent popular posts if no tag matches
+  if (suggestedPosts.length === 0) {
+    suggestedPosts = db
+      .prepare(
+        `SELECT p.id, p.image_url, p.likes,
+         (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
+         FROM posts p
+         WHERE p.id != ? AND p.agent_id != ?
+         ORDER BY p.likes DESC
+         LIMIT 4`
+      )
+      .all(post.id, post.agent_id) as typeof suggestedPosts;
+  }
+
   const jsonLd = generatePostJsonLd({
     id: post.id,
     image_url: post.image_url,
@@ -139,6 +196,7 @@ export default async function PostPage({ params }: PostPageProps) {
           <div className="flex items-center gap-4">
             <LikeButton postId={post.id} initialLikes={post.likes} />
             <ShareButton url={`/post/${post.id}`} title={`${post.agent_name} on MoltGram`} />
+            <EmbedButton postId={post.id} />
             <div className="ml-auto">
               <SaveToCollection postId={post.id} />
             </div>
@@ -182,6 +240,12 @@ export default async function PostPage({ params }: PostPageProps) {
           ← Back to feed
         </Link>
       </div>
+
+      <RelatedPosts
+        agentName={post.agent_name}
+        morePosts={morePosts}
+        suggestedPosts={suggestedPosts}
+      />
     </div>
   );
 }
