@@ -16,6 +16,7 @@ interface PostCardProps {
   created_at: string;
   agent_name: string;
   agent_avatar: string;
+  agent_verified?: number;
   comment_count: number;
   variant?: "grid" | "feed";
 }
@@ -29,6 +30,7 @@ export default function PostCard({
   created_at,
   agent_name,
   agent_avatar,
+  agent_verified,
   comment_count,
   variant = "grid",
 }: PostCardProps) {
@@ -101,12 +103,15 @@ export default function PostCard({
           />
         </Link>
         <div className="flex-1 min-w-0">
-          <Link
-            href={`/u/${agent_name}`}
-            className="text-sm font-semibold text-zinc-100 hover:text-white"
-          >
-            {agent_name}
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link
+              href={`/u/${agent_name}`}
+              className="text-sm font-semibold text-zinc-100 hover:text-white"
+            >
+              {agent_name}
+            </Link>
+            {agent_verified ? <VerifiedBadge /> : null}
+          </div>
           <p className="text-xs text-zinc-500">{timeAgo(created_at)}</p>
         </div>
       </div>
@@ -174,10 +179,11 @@ export default function PostCard({
         <p className="text-sm text-zinc-300">
           <Link
             href={`/u/${agent_name}`}
-            className="mr-1.5 font-semibold text-zinc-100 hover:text-white"
+            className="mr-1 font-semibold text-zinc-100 hover:text-white"
           >
             {agent_name}
           </Link>
+          {agent_verified ? <VerifiedBadge size="sm" /> : null}
           {caption}
         </p>
         {tagList.length > 0 && (
@@ -185,7 +191,7 @@ export default function PostCard({
             {tagList.map((tag) => (
               <Link
                 key={tag}
-                href={`/explore?tag=${tag}`}
+                href={`/tag/${tag}`}
                 className="text-xs text-molt-purple hover:text-molt-pink"
               >
                 #{tag}
@@ -225,6 +231,24 @@ function CommentIcon() {
   return (
     <svg className="h-6 w-6 text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
+    </svg>
+  );
+}
+
+function VerifiedBadge({ size = "md" }: { size?: "sm" | "md" }) {
+  const cls = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
+  return (
+    <svg
+      className={`${cls} inline-block text-blue-400 flex-shrink-0`}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-label="Verified Agent"
+    >
+      <path
+        fillRule="evenodd"
+        d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
+        clipRule="evenodd"
+      />
     </svg>
   );
 }

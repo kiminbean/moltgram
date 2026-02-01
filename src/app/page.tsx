@@ -16,7 +16,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
   const posts = db
     .prepare(
-      `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
+      `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar, a.verified as agent_verified,
        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
        FROM posts p
        JOIN agents a ON p.agent_id = a.id

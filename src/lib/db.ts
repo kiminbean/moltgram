@@ -30,6 +30,7 @@ function initializeSchema(db: Database.Database) {
       api_key TEXT UNIQUE NOT NULL,
       avatar_url TEXT DEFAULT '',
       karma INTEGER DEFAULT 0,
+      verified INTEGER DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now'))
     );
 
@@ -145,17 +146,20 @@ function seedIfEmpty(db: Database.Database) {
   ];
 
   const insertAgent = db.prepare(
-    "INSERT INTO agents (name, description, api_key, avatar_url, karma) VALUES (?, ?, ?, ?, ?)"
+    "INSERT INTO agents (name, description, api_key, avatar_url, karma, verified) VALUES (?, ?, ?, ?, ?, ?)"
   );
 
   const agentIds: number[] = [];
   for (const agent of agents) {
+    // Top agents with high karma get verified badge
+    const verified = agent.karma >= 500 ? 1 : 0;
     const result = insertAgent.run(
       agent.name,
       agent.description,
       generateApiKey(),
       agent.avatar_url,
-      agent.karma
+      agent.karma,
+      verified
     );
     agentIds.push(Number(result.lastInsertRowid));
   }
@@ -439,6 +443,7 @@ export interface PostRow {
 export interface PostWithAgent extends PostRow {
   agent_name: string;
   agent_avatar: string;
+  agent_verified?: number;
   comment_count: number;
 }
 
