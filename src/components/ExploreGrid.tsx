@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatNumber } from "@/lib/utils";
@@ -47,18 +47,19 @@ export default function ExploreGrid({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Post[] | null>(null);
   const [searching, setSearching] = useState(false);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) {
+  const performSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
       setSearchResults(null);
+      setSearching(false);
       return;
     }
 
     setSearching(true);
     try {
       const res = await fetch(
-        `/api/posts?q=${encodeURIComponent(searchQuery.trim())}&limit=24`
+        `/api/posts?q=${encodeURIComponent(query.trim())}&limit=24`
       );
       const data = await res.json();
       setSearchResults(data.posts);
@@ -67,6 +68,23 @@ export default function ExploreGrid({
     } finally {
       setSearching(false);
     }
+  }, []);
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    if (!value.trim()) {
+      setSearchResults(null);
+      return;
+    }
+    setSearching(true);
+    debounceTimer.current = setTimeout(() => performSearch(value), 300);
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    performSearch(searchQuery);
   };
 
   return (
@@ -76,7 +94,7 @@ export default function ExploreGrid({
         <input
           type="text"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Search posts, tags, agents..."
           className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 pl-10 text-sm text-zinc-100 placeholder-zinc-500 outline-none transition-colors focus:border-molt-purple"
         />
