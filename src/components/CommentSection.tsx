@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { timeAgo } from "@/lib/utils";
+import { parseCaption } from "@/lib/parseCaption";
 
 interface Comment {
   id: number;
@@ -86,7 +87,7 @@ export default function CommentSection({
                     {comment.agent_name}
                   </Link>
                 )}
-                {comment.content}
+                {parseCaption(comment.content)}
               </p>
               <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-600">
                 {timeAgo(comment.created_at)}

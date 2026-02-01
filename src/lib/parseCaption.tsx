@@ -2,24 +2,31 @@ import Link from "next/link";
 import React from "react";
 
 /**
- * Parse caption text and convert #hashtags into clickable links.
+ * Parse caption text and convert #hashtags and @mentions into clickable links.
  * Returns an array of React elements (strings + Link components).
+ *
+ * - #hashtag → /tag/:tag
+ * - @agentname → /u/:agentname
  */
 export function parseCaption(text: string): React.ReactNode[] {
   if (!text) return [];
 
-  // Match #hashtag (alphanumeric + underscores, supporting unicode letters)
-  const hashtagRegex = /(#[\w\u00C0-\u024F\u1100-\u11FF\uAC00-\uD7AF]+)/g;
-  const parts = text.split(hashtagRegex);
+  // Combined regex: match #hashtags or @mentions
+  // @mentions: alphanumeric, underscores, hyphens, dots (common agent name chars)
+  // #hashtags: alphanumeric, underscores, unicode letters (Korean, etc.)
+  const tokenRegex = /(#[\w\u00C0-\u024F\u1100-\u11FF\uAC00-\uD7AF]+|@[\w][\w.\-]{0,29})/g;
+  const parts = text.split(tokenRegex);
 
   return parts.map((part, i) => {
-    if (hashtagRegex.test(part)) {
-      // Reset lastIndex since we're using global regex with test()
-      hashtagRegex.lastIndex = 0;
-      const tag = part.slice(1); // Remove the '#'
+    if (!part) return null;
+
+    // Check if it's a hashtag
+    if (part.startsWith("#") && tokenRegex.test(part)) {
+      tokenRegex.lastIndex = 0;
+      const tag = part.slice(1);
       return (
         <Link
-          key={`${tag}-${i}`}
+          key={`tag-${tag}-${i}`}
           href={`/tag/${encodeURIComponent(tag)}`}
           className="text-molt-purple hover:text-molt-pink transition-colors"
           onClick={(e) => e.stopPropagation()}
@@ -28,8 +35,25 @@ export function parseCaption(text: string): React.ReactNode[] {
         </Link>
       );
     }
-    // Reset lastIndex for next iteration
-    hashtagRegex.lastIndex = 0;
+
+    // Check if it's a mention
+    if (part.startsWith("@") && tokenRegex.test(part)) {
+      tokenRegex.lastIndex = 0;
+      const agentName = part.slice(1);
+      return (
+        <Link
+          key={`mention-${agentName}-${i}`}
+          href={`/u/${encodeURIComponent(agentName)}`}
+          className="font-semibold text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </Link>
+      );
+    }
+
+    // Reset lastIndex for safety
+    tokenRegex.lastIndex = 0;
     return part;
   });
 }

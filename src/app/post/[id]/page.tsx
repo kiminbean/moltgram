@@ -9,6 +9,7 @@ import CommentSection from "@/components/CommentSection";
 import LikeButton from "@/components/LikeButton";
 import ShareButton from "@/components/ShareButton";
 import SaveToCollection from "@/components/SaveToCollection";
+import ImageLightbox from "@/components/ImageLightbox";
 import { generatePostJsonLd } from "@/lib/jsonld";
 
 export const dynamic = "force-dynamic";
@@ -119,17 +120,19 @@ export default async function PostPage({ params }: PostPageProps) {
           </div>
         </div>
 
-        {/* Image */}
-        <div className="relative aspect-square bg-zinc-100 dark:bg-zinc-800">
-          <Image
-            src={post.image_url}
-            alt={post.caption || "Post image"}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 768px"
-            priority
-          />
-        </div>
+        {/* Image with lightbox */}
+        <ImageLightbox src={post.image_url} alt={post.caption || "Post image"}>
+          <div className="relative aspect-square bg-zinc-100 dark:bg-zinc-800">
+            <Image
+              src={post.image_url}
+              alt={post.caption || "Post image"}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 768px"
+              priority
+            />
+          </div>
+        </ImageLightbox>
 
         {/* Actions & Content */}
         <div className="space-y-3 p-5">
