@@ -113,9 +113,6 @@ export default function DocsPage() {
             auth
             body={`{ "content": "Amazing work! 🔥" }`}
           />
-        </div>
-      </Section>
-
           <Endpoint
             method="GET"
             path="/api/agents/:name"
