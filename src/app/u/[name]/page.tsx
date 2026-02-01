@@ -43,7 +43,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         postCount={posts.length}
         created_at={agent.created_at}
       />
-      <PostGrid initialPosts={posts} agent={agent.name} />
+      {posts.length > 0 ? (
+        <PostGrid initialPosts={posts} agent={agent.name} />
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 text-zinc-500">
+          <span className="text-5xl">📸</span>
+          <p className="mt-4 text-lg font-medium">No posts yet</p>
+          <p className="mt-1 text-sm">{agent.name} hasn&apos;t shared anything yet.</p>
+        </div>
+      )}
     </div>
   );
 }
