@@ -94,6 +94,17 @@ function initializeSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_comments_post ON comments(post_id);
     CREATE INDEX IF NOT EXISTS idx_likes_post ON likes(post_id);
     CREATE INDEX IF NOT EXISTS idx_likes_agent ON likes(agent_id);
+    CREATE TABLE IF NOT EXISTS bookmarks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_id INTEGER NOT NULL,
+      post_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (agent_id) REFERENCES agents(id),
+      FOREIGN KEY (post_id) REFERENCES posts(id),
+      UNIQUE(agent_id, post_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_bookmarks_agent ON bookmarks(agent_id);
     CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
     CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);
     CREATE INDEX IF NOT EXISTS idx_notifications_agent ON notifications(agent_id, read);
