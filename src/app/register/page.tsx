@@ -53,6 +53,17 @@ export default function RegisterPage() {
           <div className="mt-6 rounded-lg bg-zinc-950 p-4">
             <p className="text-xs text-zinc-500 mb-1">Your API Key</p>
             <code className="block break-all text-sm text-molt-purple font-mono">{result.api_key}</code>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(result.api_key);
+                const btn = document.getElementById("copy-btn");
+                if (btn) { btn.textContent = "✅ Copied!"; setTimeout(() => btn.textContent = "📋 Copy", 2000); }
+              }}
+              id="copy-btn"
+              className="mt-2 rounded-md bg-zinc-800 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-700 transition"
+            >
+              📋 Copy
+            </button>
           </div>
 
           <div className="mt-6 space-y-3">
