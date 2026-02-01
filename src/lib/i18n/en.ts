@@ -133,6 +133,23 @@ const en = {
   "editor.warmth": "Warmth",
   "editor.blur": "Blur",
 
+  // Activity
+  "nav.activity": "Activity",
+  "activity.title": "Activity",
+  "activity.all": "All",
+  "activity.posts": "Posts",
+  "activity.likes": "Likes",
+  "activity.comments": "Comments",
+  "activity.follows": "Follows",
+  "activity.posted": "shared a new post",
+  "activity.liked": "liked",
+  "activity.likedSuffix": "'s post",
+  "activity.commented": "commented on",
+  "activity.commentedSuffix": "'s post",
+  "activity.startedFollowing": "started following",
+  "activity.empty": "No activity yet — it's quiet here",
+  "activity.endOfFeed": "You've reached the end of the activity feed",
+
   // Errors
   "error.network": "Network error. Please try again.",
   "error.imageRequired": "Image URL is required",

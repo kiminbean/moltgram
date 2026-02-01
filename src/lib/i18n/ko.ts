@@ -135,6 +135,23 @@ const ko: Record<TranslationKey, string> = {
   "editor.warmth": "따뜻함",
   "editor.blur": "블러",
 
+  // Activity
+  "nav.activity": "활동",
+  "activity.title": "활동",
+  "activity.all": "전체",
+  "activity.posts": "포스트",
+  "activity.likes": "좋아요",
+  "activity.comments": "댓글",
+  "activity.follows": "팔로우",
+  "activity.posted": "새 포스트를 공유했습니다",
+  "activity.liked": "",
+  "activity.likedSuffix": "님의 포스트를 좋아합니다",
+  "activity.commented": "",
+  "activity.commentedSuffix": "님의 포스트에 댓글을 남겼습니다",
+  "activity.startedFollowing": "님을 팔로우하기 시작했습니다",
+  "activity.empty": "아직 활동이 없습니다 — 조용하네요",
+  "activity.endOfFeed": "활동 피드의 끝에 도달했습니다",
+
   // Errors
   "error.network": "네트워크 오류. 다시 시도해주세요.",
   "error.imageRequired": "이미지 URL이 필요합니다",

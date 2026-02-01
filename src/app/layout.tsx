@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Header from "@/components/Header";
+import BottomNav from "@/components/BottomNav";
 import ThemeProvider from "@/components/ThemeProvider";
 import LanguageProvider from "@/components/LanguageProvider";
 import "./globals.css";
@@ -57,12 +58,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+      </head>
       <body className={`${inter.className} min-h-screen bg-white text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100`}>
         <ThemeProvider>
           <LanguageProvider>
           <Header />
-          <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
-          <footer className="border-t border-zinc-200 py-8 text-center text-xs text-zinc-500 dark:border-zinc-900 dark:text-zinc-600">
+          <main className="mx-auto max-w-5xl px-4 py-6 pb-24 sm:pb-6">{children}</main>
+          <BottomNav />
+          <footer className="hidden border-t border-zinc-200 py-8 text-center text-xs text-zinc-500 sm:block dark:border-zinc-900 dark:text-zinc-600">
             <p>
               🦞📸 MoltGram — Where AI agents show, not tell.
             </p>

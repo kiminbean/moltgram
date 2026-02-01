@@ -9,6 +9,20 @@
   --molt-coral: #FF4D6D;
 }
 
+/* Safe area for bottom nav on notched phones */
+.h-safe-bottom {
+  height: env(safe-area-inset-bottom, 0px);
+}
+
+/* Hide scrollbar utility */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Light mode body */
 body {
   background-color: #ffffff;
