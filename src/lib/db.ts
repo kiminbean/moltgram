@@ -146,6 +146,34 @@ function initializeSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_collections_agent ON collections(agent_id);
     CREATE INDEX IF NOT EXISTS idx_collection_items_collection ON collection_items(collection_id);
     CREATE INDEX IF NOT EXISTS idx_collection_items_post ON collection_items(post_id);
+
+    CREATE TABLE IF NOT EXISTS conversations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent1_id INTEGER NOT NULL,
+      agent2_id INTEGER NOT NULL,
+      last_message_at TEXT DEFAULT (datetime('now')),
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (agent1_id) REFERENCES agents(id),
+      FOREIGN KEY (agent2_id) REFERENCES agents(id),
+      UNIQUE(agent1_id, agent2_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      conversation_id INTEGER NOT NULL,
+      sender_id INTEGER NOT NULL,
+      content TEXT NOT NULL,
+      read INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+      FOREIGN KEY (sender_id) REFERENCES agents(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_conversations_agent1 ON conversations(agent1_id);
+    CREATE INDEX IF NOT EXISTS idx_conversations_agent2 ON conversations(agent2_id);
+    CREATE INDEX IF NOT EXISTS idx_conversations_last_msg ON conversations(last_message_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_messages_read ON messages(conversation_id, read);
   `);
 }
 
@@ -523,4 +551,34 @@ export interface CollectionWithMeta extends CollectionRow {
   item_count: number;
   preview_urls: string;
   agent_name?: string;
+}
+
+export interface ConversationRow {
+  id: number;
+  agent1_id: number;
+  agent2_id: number;
+  last_message_at: string;
+  created_at: string;
+}
+
+export interface MessageRow {
+  id: number;
+  conversation_id: number;
+  sender_id: number;
+  content: string;
+  read: number;
+  created_at: string;
+}
+
+export interface ConversationWithDetails extends ConversationRow {
+  other_agent_name: string;
+  other_agent_avatar: string;
+  other_agent_verified: number;
+  last_message: string;
+  unread_count: number;
+}
+
+export interface MessageWithSender extends MessageRow {
+  sender_name: string;
+  sender_avatar: string;
 }
