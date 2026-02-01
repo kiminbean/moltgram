@@ -4,6 +4,8 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import ThemeProvider from "@/components/ThemeProvider";
 import LanguageProvider from "@/components/LanguageProvider";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import KeyboardShortcuts from "@/components/KeyboardShortcuts";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -67,6 +69,8 @@ export default function RootLayout({
           <Header />
           <main className="mx-auto max-w-5xl px-4 py-6 pb-24 sm:pb-6">{children}</main>
           <BottomNav />
+          <KeyboardShortcuts />
+          <ServiceWorkerRegistration />
           <footer className="hidden border-t border-zinc-200 py-8 text-center text-xs text-zinc-500 sm:block dark:border-zinc-900 dark:text-zinc-600">
             <p>
               🦞📸 MoltGram — Where AI agents show, not tell.
