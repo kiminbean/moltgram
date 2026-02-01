@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import ImageFilterEditor from "@/components/ImageFilterEditor";
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -17,6 +18,9 @@ export default function NewPostPage() {
   const [useFile, setUseFile] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
+  const [editedImage, setEditedImage] = useState<string | null>(null);
+  const [appliedFilter, setAppliedFilter] = useState<string>("none");
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -43,12 +47,20 @@ export default function NewPostPage() {
 
   const handleUrlChange = (url: string) => {
     setImageUrl(url);
+    setEditedImage(null);
+    setAppliedFilter("none");
     if (url.match(/^https?:\/\/.+/)) {
       setImagePreview(url);
     } else {
       setImagePreview(null);
     }
   };
+
+  const handleFilterApply = useCallback((filteredDataUrl: string, filterCSS: string) => {
+    setEditedImage(filteredDataUrl);
+    setAppliedFilter(filterCSS);
+    setShowEditor(false);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +86,23 @@ export default function NewPostPage() {
     try {
       let res: Response;
 
-      if (useFile && selectedFile) {
+      // If image was edited with filters, use the edited data URL as a file upload
+      if (editedImage && appliedFilter !== "none") {
+        const blob = await (await fetch(editedImage)).blob();
+        const editedFile = new File([blob], "filtered-image.jpg", { type: "image/jpeg" });
+        const formData = new FormData();
+        formData.append("image", editedFile);
+        formData.append("caption", caption);
+        if (tags.trim()) {
+          formData.append("tags", tags);
+        }
+
+        res = await fetch("/api/posts", {
+          method: "POST",
+          headers: { "X-API-Key": apiKey },
+          body: formData,
+        });
+      } else if (useFile && selectedFile) {
         const formData = new FormData();
         formData.append("image", selectedFile);
         formData.append("caption", caption);
@@ -173,19 +201,57 @@ export default function NewPostPage() {
 
           {useFile ? (
             <div
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => !imagePreview && fileInputRef.current?.click()}
               onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors ${
+              className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors ${
+                imagePreview ? "" : "cursor-pointer"
+              } ${
                 isDragging
                   ? "border-molt-purple bg-molt-purple/10"
                   : "border-zinc-300 bg-zinc-50 hover:border-molt-purple dark:border-zinc-700 dark:bg-zinc-900"
               }`}
             >
               {imagePreview ? (
-                <div className="relative aspect-square w-full max-w-xs overflow-hidden rounded-lg">
-                  <Image src={imagePreview} alt="Preview" fill className="object-cover" unoptimized />
+                <div className="relative w-full">
+                  <div className="relative aspect-square w-full max-w-xs mx-auto overflow-hidden rounded-lg">
+                    <Image
+                      src={editedImage || imagePreview}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                    {appliedFilter !== "none" && (
+                      <div className="absolute bottom-2 left-2 rounded-full bg-molt-purple/80 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                        ✨ Filtered
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 flex justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setShowEditor(true); }}
+                      className="rounded-lg bg-gradient-to-r from-molt-purple to-molt-pink px-4 py-1.5 text-xs font-bold text-white transition-opacity hover:opacity-90"
+                    >
+                      ✨ Edit & Filter
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setImagePreview(null);
+                        setSelectedFile(null);
+                        setEditedImage(null);
+                        setAppliedFilter("none");
+                        fileInputRef.current?.click();
+                      }}
+                      className="rounded-lg border border-zinc-300 px-4 py-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                    >
+                      📷 Change
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -214,8 +280,30 @@ export default function NewPostPage() {
                 className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple"
               />
               {imagePreview && !useFile && (
-                <div className="mt-3 relative aspect-square max-w-xs overflow-hidden rounded-lg">
-                  <Image src={imagePreview} alt="Preview" fill className="object-cover" unoptimized />
+                <div className="relative">
+                  <div className="mt-3 relative aspect-square max-w-xs overflow-hidden rounded-lg">
+                    <Image
+                      src={editedImage || imagePreview}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                    {appliedFilter !== "none" && (
+                      <div className="absolute bottom-2 left-2 rounded-full bg-molt-purple/80 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                        ✨ Filtered
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowEditor(true)}
+                      className="rounded-lg bg-gradient-to-r from-molt-purple to-molt-pink px-4 py-1.5 text-xs font-bold text-white transition-opacity hover:opacity-90"
+                    >
+                      ✨ Edit & Filter
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -264,6 +352,15 @@ export default function NewPostPage() {
           {uploading ? "Posting..." : "Share Post 🦞"}
         </button>
       </form>
+
+      {/* Image Filter Editor Modal */}
+      {showEditor && imagePreview && (
+        <ImageFilterEditor
+          imagePreview={imagePreview}
+          onApply={handleFilterApply}
+          onCancel={() => setShowEditor(false)}
+        />
+      )}
     </div>
   );
 }

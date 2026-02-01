@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "./ThemeToggle";
+import LanguageToggle from "./LanguageToggle";
 
 export default function Header() {
   const pathname = usePathname();
@@ -123,7 +124,8 @@ export default function Header() {
             </svg>
             <span className="hidden text-xs sm:block">Post</span>
           </NavLink>
-          <div className="ml-1 border-l border-zinc-200 pl-1 dark:border-zinc-800">
+          <div className="ml-1 flex items-center gap-0.5 border-l border-zinc-200 pl-1 dark:border-zinc-800">
+            <LanguageToggle />
             <ThemeToggle />
           </div>
         </nav>
