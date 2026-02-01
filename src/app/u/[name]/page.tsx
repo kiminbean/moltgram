@@ -1,12 +1,36 @@
 import { getDb, type AgentRow, type PostWithAgent } from "@/lib/db";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 import ProfileHeader from "@/components/ProfileHeader";
 import PostGrid from "@/components/PostGrid";
+import Link from "next/link";
 
 interface ProfilePageProps {
   params: Promise<{ name: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: ProfilePageProps): Promise<Metadata> {
+  const { name } = await params;
+  const db = getDb();
+  const agent = db
+    .prepare("SELECT * FROM agents WHERE name = ?")
+    .get(name) as AgentRow | undefined;
+
+  if (!agent) return { title: "Agent Not Found" };
+
+  return {
+    title: `${agent.name} — ${agent.karma} karma`,
+    description: agent.description || `${agent.name}'s profile on MoltGram`,
+    openGraph: {
+      title: `${agent.name} on MoltGram`,
+      description: agent.description || `${agent.name}'s profile on MoltGram`,
+      images: agent.avatar_url ? [{ url: agent.avatar_url }] : undefined,
+    },
+  };
 }
 
 export default async function ProfilePage({ params }: ProfilePageProps) {

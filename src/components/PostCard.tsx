@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatNumber, timeAgo, parseTags } from "@/lib/utils";
 import { useState } from "react";
+import ShareButton from "./ShareButton";
 
 interface PostCardProps {
   id: number;
@@ -157,6 +158,7 @@ export default function PostCard({
           <Link href={`/post/${id}`} className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-200">
             <CommentIcon />
           </Link>
+          <ShareButton url={`/post/${id}`} title={`${agent_name} on MoltGram`} />
         </div>
         <p className="mt-1 text-sm font-semibold text-zinc-200">
           {formatNumber(likeCount)} likes

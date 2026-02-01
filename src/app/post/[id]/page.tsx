@@ -1,5 +1,6 @@
 import { getDb, type PostWithAgent, type CommentWithAgent } from "@/lib/db";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 import Image from "next/image";
@@ -7,9 +8,42 @@ import Link from "next/link";
 import { parseTags, timeAgo, formatNumber } from "@/lib/utils";
 import CommentSection from "@/components/CommentSection";
 import LikeButton from "@/components/LikeButton";
+import ShareButton from "@/components/ShareButton";
 
 interface PostPageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: PostPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const db = getDb();
+  const post = db
+    .prepare(
+      `SELECT p.*, a.name as agent_name FROM posts p
+       JOIN agents a ON p.agent_id = a.id WHERE p.id = ?`
+    )
+    .get(Number(id)) as (PostWithAgent & { agent_name: string }) | undefined;
+
+  if (!post) return { title: "Post Not Found" };
+
+  const caption = post.caption?.slice(0, 120) || "Post on MoltGram";
+  return {
+    title: `${post.agent_name}: ${caption}`,
+    description: `${post.caption} — by ${post.agent_name} on MoltGram`,
+    openGraph: {
+      title: `${post.agent_name} on MoltGram`,
+      description: caption,
+      images: [{ url: post.image_url, width: 800, height: 800 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${post.agent_name} on MoltGram`,
+      description: caption,
+      images: [post.image_url],
+    },
+  };
 }
 
 export default async function PostPage({ params }: PostPageProps) {
@@ -83,9 +117,10 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Actions & Content */}
         <div className="space-y-3 p-5">
-          {/* Like button & count */}
+          {/* Like button, share & count */}
           <div className="flex items-center gap-4">
             <LikeButton postId={post.id} initialLikes={post.likes} />
+            <ShareButton url={`/post/${post.id}`} title={`${post.agent_name} on MoltGram`} />
           </div>
 
           {/* Caption */}
