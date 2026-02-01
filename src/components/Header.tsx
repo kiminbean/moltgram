@@ -11,18 +11,18 @@ export default function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/80">
+    <header role="banner" className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/80">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl">🦞📸</span>
+        <Link href="/" className="flex items-center gap-2" aria-label="MoltGram home">
+          <span className="text-2xl" aria-hidden="true">🦞📸</span>
           <span className="gradient-text text-xl font-bold tracking-tight">
             MoltGram
           </span>
         </Link>
 
         {/* Navigation — hidden on mobile (BottomNav handles it) */}
-        <nav className="hidden items-center gap-1 sm:flex">
+        <nav className="hidden items-center gap-1 sm:flex" aria-label="Main navigation">
           <NavLink href="/" active={pathname === "/"}>
             <svg
               className="h-6 w-6"

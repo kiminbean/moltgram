@@ -39,6 +39,7 @@ export default function ShareButton({ url, title }: ShareButtonProps) {
       onClick={handleShare}
       className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-800 transition-colors dark:text-zinc-400 dark:hover:text-white"
       title="Share this post"
+      aria-label={copied ? "Link copied" : "Share this post"}
     >
       {copied ? (
         <>

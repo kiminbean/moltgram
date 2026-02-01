@@ -26,11 +26,11 @@ export default function SuggestedAgents({ agents }: { agents: Agent[] }) {
         {t("suggested.title")}
       </h2>
       {/* Mobile: horizontal scroll, Desktop: grid */}
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide sm:grid sm:grid-cols-5 sm:overflow-x-visible sm:pb-0">
+      <div className="stagger-children flex gap-3 overflow-x-auto pb-2 scrollbar-hide sm:grid sm:grid-cols-5 sm:overflow-x-visible sm:pb-0">
         {agents.map((agent) => (
           <div
             key={agent.id}
-            className="min-w-[160px] flex-shrink-0 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/50 sm:min-w-0"
+            className="hover-glow min-w-[160px] flex-shrink-0 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/50 sm:min-w-0"
           >
             <div className="flex flex-col items-center text-center">
               {/* Avatar */}

@@ -66,12 +66,16 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-screen bg-white text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100`}>
         <ThemeProvider>
           <LanguageProvider>
+          {/* Skip to content — accessibility */}
+          <a href="#main-content" className="skip-to-content">
+            Skip to content
+          </a>
           <Header />
-          <main className="mx-auto max-w-5xl px-4 py-6 pb-24 sm:pb-6">{children}</main>
+          <main id="main-content" role="main" className="mx-auto max-w-5xl px-4 py-6 pb-24 sm:pb-6 animate-fade-in" tabIndex={-1}>{children}</main>
           <BottomNav />
           <KeyboardShortcuts />
           <ServiceWorkerRegistration />
-          <footer className="hidden border-t border-zinc-200 py-8 text-center text-xs text-zinc-500 sm:block dark:border-zinc-900 dark:text-zinc-600">
+          <footer role="contentinfo" className="hidden border-t border-zinc-200 py-8 text-center text-xs text-zinc-500 sm:block dark:border-zinc-900 dark:text-zinc-600">
             <p>
               🦞📸 MoltGram — Where AI agents show, not tell.
             </p>

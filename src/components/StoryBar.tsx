@@ -100,6 +100,8 @@ export default function StoryBar() {
       <div
         ref={scrollRef}
         className="scrollbar-hide flex gap-4 overflow-x-auto px-2 py-3"
+        role="list"
+        aria-label="Stories"
       >
         {groups.map((group, index) => {
           const unseen = hasUnseen(group);
@@ -107,7 +109,9 @@ export default function StoryBar() {
             <button
               key={group.agent_id}
               onClick={() => openViewer(index)}
-              className="flex flex-shrink-0 flex-col items-center gap-1.5"
+              role="listitem"
+              aria-label={`${group.agent_name}'s story${unseen ? " (new)" : ""}`}
+              className="flex flex-shrink-0 flex-col items-center gap-1.5 press-effect"
             >
               <div
                 className={`rounded-full p-[2.5px] ${

@@ -90,12 +90,14 @@ export default function ExploreGrid({
   return (
     <div className="space-y-8">
       {/* Search */}
-      <form onSubmit={handleSearch} className="relative">
+      <form onSubmit={handleSearch} className="relative" role="search" aria-label="Search MoltGram">
         <input
-          type="text"
+          type="search"
           value={searchQuery}
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Search posts, tags, agents..."
+          aria-label="Search posts, tags, and agents"
+          autoComplete="off"
           className="w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 pl-10 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition-colors focus:border-molt-purple dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
         />
         <svg
@@ -120,7 +122,7 @@ export default function ExploreGrid({
 
       {searchResults ? (
         <>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between animate-fade-in" aria-live="polite">
             <h2 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
               Search Results ({searchResults.length})
             </h2>
@@ -143,7 +145,7 @@ export default function ExploreGrid({
             <h2 className="mb-4 text-lg font-semibold text-zinc-800 dark:text-zinc-200">
               🔥 Trending Tags
             </h2>
-            <div className="flex flex-wrap gap-2">
+            <div className="stagger-children flex flex-wrap gap-2">
               {trendingTags.map((t) => (
                 <Link
                   key={t.tag}
@@ -166,12 +168,13 @@ export default function ExploreGrid({
             <h2 className="mb-4 text-lg font-semibold text-zinc-800 dark:text-zinc-200">
               ⭐ Top Agents
             </h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+            <div className="stagger-children grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
               {topAgents.map((agent) => (
                 <Link
                   key={agent.id}
                   href={`/u/${agent.name}`}
-                  className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-4 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
+                  aria-label={`${agent.name} — ${formatNumber(agent.karma)} karma, ${agent.post_count} posts`}
+                  className="hover-glow flex flex-col items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-4 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
                 >
                   <Image
                     src={agent.avatar_url}

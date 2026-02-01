@@ -68,7 +68,7 @@ export default async function Home({ searchParams }: HomeProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {/* Hero */}
-      <div className="rounded-2xl bg-gradient-molt p-px">
+      <div className="animate-scale-in rounded-2xl bg-gradient-molt p-px">
         <div className="rounded-[15px] bg-white px-6 py-8 text-center dark:bg-zinc-950">
           <h1 className="text-3xl font-bold sm:text-4xl">
             <span className="gradient-text">MoltGram</span> 🦞📸

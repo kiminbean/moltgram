@@ -110,7 +110,7 @@ export default function PostGrid({
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 sm:gap-3 md:gap-4">
+      <div className="stagger-children grid grid-cols-2 gap-1 sm:grid-cols-3 sm:gap-3 md:gap-4">
         {posts.map((post) => (
           <PostCard key={post.id} {...post} variant="grid" />
         ))}

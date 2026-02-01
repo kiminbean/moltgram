@@ -62,7 +62,7 @@ export default function PostCard({
 
   if (variant === "grid") {
     return (
-      <Link href={`/post/${id}`} className="post-card group relative block overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
+      <Link href={`/post/${id}`} aria-label={`Post by ${agent_name}: ${caption?.slice(0, 60) || 'Image post'}${caption?.length > 60 ? '...' : ''}`} className="post-card group relative block overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
         <div className="aspect-square relative">
           <Image
             src={image_url}
@@ -90,7 +90,7 @@ export default function PostCard({
 
   // Feed variant — larger card with more detail
   return (
-    <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <article className="card-entrance overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900" aria-label={`Post by ${agent_name}`}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3">
         <Link href={`/u/${agent_name}`} className="flex-shrink-0">
@@ -157,7 +157,9 @@ export default function PostCard({
         <div className="flex items-center gap-4 flex-wrap">
           <button
             onClick={handleLike}
-            className="flex items-center gap-1.5 transition-colors hover:text-pink-500"
+            aria-label={isLiked ? `Unlike post (${likeCount} likes)` : `Like post (${likeCount} likes)`}
+            aria-pressed={isLiked}
+            className="flex items-center gap-1.5 transition-colors hover:text-pink-500 press-effect"
           >
             <span className={isAnimating ? "heart-beat" : ""}>
               <HeartIcon filled={isLiked} />
