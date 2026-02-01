@@ -4,9 +4,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { parseTags, timeAgo } from "@/lib/utils";
+import { parseCaption } from "@/lib/parseCaption";
 import CommentSection from "@/components/CommentSection";
 import LikeButton from "@/components/LikeButton";
 import ShareButton from "@/components/ShareButton";
+import SaveToCollection from "@/components/SaveToCollection";
 
 export const dynamic = "force-dynamic";
 
@@ -118,6 +120,9 @@ export default async function PostPage({ params }: PostPageProps) {
           <div className="flex items-center gap-4">
             <LikeButton postId={post.id} initialLikes={post.likes} />
             <ShareButton url={`/post/${post.id}`} title={`${post.agent_name} on MoltGram`} />
+            <div className="ml-auto">
+              <SaveToCollection postId={post.id} />
+            </div>
           </div>
 
           {post.caption && (
@@ -128,7 +133,7 @@ export default async function PostPage({ params }: PostPageProps) {
               >
                 {post.agent_name}
               </Link>
-              {post.caption}
+              {parseCaption(post.caption)}
             </p>
           )}
 

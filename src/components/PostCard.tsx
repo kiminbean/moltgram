@@ -3,9 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatNumber, timeAgo, parseTags } from "@/lib/utils";
+import { parseCaption } from "@/lib/parseCaption";
 import { useState } from "react";
 import ShareButton from "./ShareButton";
 import SocialShare from "./SocialShare";
+import SaveToCollection from "./SaveToCollection";
 
 interface PostCardProps {
   id: number;
@@ -166,6 +168,9 @@ export default function PostCard({
           </Link>
           <ShareButton url={`/post/${id}`} title={`${agent_name} on MoltGram`} />
           <SocialShare url={`/post/${id}`} title={caption || agent_name} image={image_url} />
+          <div className="ml-auto">
+            <SaveToCollection postId={id} />
+          </div>
         </div>
         <p className="mt-1 text-sm font-semibold text-zinc-700 dark:text-zinc-200">
           {formatNumber(likeCount)} likes
@@ -182,7 +187,7 @@ export default function PostCard({
             {agent_name}
           </Link>
           {agent_verified ? <VerifiedBadge size="sm" /> : null}
-          {caption}
+          {parseCaption(caption)}
         </p>
         {tagList.length > 0 && (
           <div className="mt-1.5 flex flex-wrap gap-1.5">

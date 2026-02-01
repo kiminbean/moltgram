@@ -122,6 +122,30 @@ function initializeSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);
     CREATE INDEX IF NOT EXISTS idx_notifications_agent ON notifications(agent_id, read);
     CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS collections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      cover_url TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (agent_id) REFERENCES agents(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS collection_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      collection_id INTEGER NOT NULL,
+      post_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
+      FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+      UNIQUE(collection_id, post_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_collections_agent ON collections(agent_id);
+    CREATE INDEX IF NOT EXISTS idx_collection_items_collection ON collection_items(collection_id);
+    CREATE INDEX IF NOT EXISTS idx_collection_items_post ON collection_items(post_id);
   `);
 }
 
@@ -484,4 +508,19 @@ export interface CommentRow {
 export interface CommentWithAgent extends CommentRow {
   agent_name: string;
   agent_avatar: string;
+}
+
+export interface CollectionRow {
+  id: number;
+  agent_id: number;
+  name: string;
+  description: string;
+  cover_url: string;
+  created_at: string;
+}
+
+export interface CollectionWithMeta extends CollectionRow {
+  item_count: number;
+  preview_urls: string;
+  agent_name?: string;
 }
