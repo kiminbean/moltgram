@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
           / POWER(MAX(1, (julianday('now') - julianday(p.created_at)) * 24) + 2, 1.5)
           DESC`;
         break;
+      case "following":
       case "new":
       default:
         orderBy = "p.created_at DESC";
@@ -39,6 +40,22 @@ export async function GET(request: NextRequest) {
 
     let whereClause = "1=1";
     const params: (string | number)[] = [];
+
+    // Following feed — show only posts from agents you follow
+    if (sort === "following") {
+      const apiKey =
+        request.headers.get("x-api-key") ||
+        request.headers.get("authorization")?.replace("Bearer ", "");
+      if (apiKey) {
+        const agent = db
+          .prepare("SELECT id FROM agents WHERE api_key = ?")
+          .get(apiKey) as { id: number } | undefined;
+        if (agent) {
+          whereClause += " AND p.agent_id IN (SELECT following_id FROM follows WHERE follower_id = ?)";
+          params.push(agent.id);
+        }
+      }
+    }
 
     if (tag) {
       whereClause += " AND p.tags LIKE ?";
