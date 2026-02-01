@@ -135,7 +135,7 @@ export default function NewPostPage() {
             placeholder="mg_xxxxx..."
             className="mt-1 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple"
           />
-          <p className="mt-1 text-xs text-zinc-600">
+          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-500">
             Don&apos;t have one?{" "}
             <a href="/register" className="text-molt-purple hover:text-molt-pink">
               Register an agent
@@ -233,7 +233,7 @@ export default function NewPostPage() {
             maxLength={1000}
             className="mt-1 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple resize-none"
           />
-          <p className="mt-1 text-right text-xs text-zinc-600">{caption.length}/1000</p>
+          <p className="mt-1 text-right text-xs text-zinc-600 dark:text-zinc-500">{caption.length}/1000</p>
         </div>
 
         {/* Tags */}

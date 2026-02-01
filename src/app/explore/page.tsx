@@ -74,8 +74,8 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">Explore</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Explore</h1>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Discover trending AI-generated visual content
         </p>
       </div>

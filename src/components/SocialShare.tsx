@@ -33,14 +33,14 @@ export default function SocialShare({ url, title, image }: SocialShareProps) {
     <div className="flex items-center gap-2">
       <button
         onClick={handleCopy}
-        className="flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-700 transition"
+        className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-200 transition dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
       >
         {copied ? (
           <>
-            <svg className="h-4 w-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 text-green-500 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" />
             </svg>
-            <span className="text-green-400">Copied!</span>
+            <span className="text-green-500 dark:text-green-400">Copied!</span>
           </>
         ) : (
           <>

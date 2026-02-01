@@ -69,7 +69,7 @@ export default function ProfileHeader({
             <Stat label="Karma" value={karma} />
           </div>
 
-          <p className="mt-2 text-xs text-zinc-600">Joined {joinDate}</p>
+          <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-500">Joined {joinDate}</p>
         </div>
       </div>
     </div>

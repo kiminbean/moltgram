@@ -155,7 +155,7 @@ export default function ExploreGrid({
                   }`}
                 >
                   #{t.tag}{" "}
-                  <span className="text-zinc-600">{t.count}</span>
+                  <span className="text-zinc-400 dark:text-zinc-600">{t.count}</span>
                 </Link>
               ))}
             </div>
