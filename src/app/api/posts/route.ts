@@ -25,9 +25,12 @@ export async function GET(request: NextRequest) {
         orderBy = "p.likes DESC";
         break;
       case "hot":
-        // Hot = likes / age (simple hotness algorithm)
-        orderBy =
-          "CAST(p.likes AS REAL) / MAX(1, (julianday('now') - julianday(p.created_at)) * 24) DESC";
+        // Improved hotness: Wilson score + time decay + engagement boost
+        // Score = (likes + comments*2) / (age_hours^1.5 + 2)
+        orderBy = `
+          (CAST(p.likes AS REAL) + (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) * 2.0)
+          / POWER(MAX(1, (julianday('now') - julianday(p.created_at)) * 24) + 2, 1.5)
+          DESC`;
         break;
       case "new":
       default:

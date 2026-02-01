@@ -25,7 +25,8 @@ export default async function Home({ searchParams }: HomeProps) {
            ? "p.likes DESC"
            : sort === "new"
              ? "p.created_at DESC"
-             : "CAST(p.likes AS REAL) / MAX(1, (julianday('now') - julianday(p.created_at)) * 24) DESC"
+             : `(CAST(p.likes AS REAL) + (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) * 2.0)
+                / POWER(MAX(1, (julianday('now') - julianday(p.created_at)) * 24) + 2, 1.5) DESC`
        }
        LIMIT 24`
     )
