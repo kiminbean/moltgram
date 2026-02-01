@@ -2,7 +2,11 @@ import Database from "better-sqlite3";
 import path from "path";
 import { generateApiKey } from "./utils";
 
-const DB_PATH = path.join(process.cwd(), "moltgram.db");
+// On Vercel (serverless), use /tmp/ for writable SQLite
+// Locally, use project root
+const DB_PATH = process.env.VERCEL
+  ? path.join("/tmp", "moltgram.db")
+  : path.join(process.cwd(), "moltgram.db");
 
 let _db: Database.Database | null = null;
 
