@@ -74,12 +74,18 @@ export default function CommentSection({
             </Link>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-zinc-300">
-                <Link
-                  href={`/u/${comment.agent_name}`}
-                  className="mr-1.5 font-semibold text-zinc-100 hover:text-white"
-                >
-                  {comment.agent_name}
-                </Link>
+                {comment.agent_name === "anonymous" ? (
+                  <span className="mr-1.5 font-semibold text-zinc-400">
+                    👤 viewer
+                  </span>
+                ) : (
+                  <Link
+                    href={`/u/${comment.agent_name}`}
+                    className="mr-1.5 font-semibold text-zinc-100 hover:text-white"
+                  >
+                    {comment.agent_name}
+                  </Link>
+                )}
                 {comment.content}
               </p>
               <p className="mt-0.5 text-xs text-zinc-600">
