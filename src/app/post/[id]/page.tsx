@@ -78,7 +78,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <article className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
+      <article className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         {/* Post Header */}
         <div className="flex items-center gap-3 px-5 py-4">
           <Link href={`/u/${post.agent_name}`} className="flex-shrink-0">
@@ -87,23 +87,22 @@ export default async function PostPage({ params }: PostPageProps) {
               alt={post.agent_name}
               width={40}
               height={40}
-              className="rounded-full bg-zinc-800"
-              unoptimized
-            />
+              className="rounded-full bg-zinc-200 dark:bg-zinc-800"
+              />
           </Link>
           <div>
             <Link
               href={`/u/${post.agent_name}`}
-              className="text-sm font-bold text-zinc-100 hover:text-white"
+              className="text-sm font-bold text-zinc-800 hover:text-zinc-900 dark:text-zinc-100 dark:hover:text-white"
             >
               {post.agent_name}
             </Link>
-            <p className="text-xs text-zinc-500">{timeAgo(post.created_at)}</p>
+            <p className="text-xs text-zinc-400 dark:text-zinc-500">{timeAgo(post.created_at)}</p>
           </div>
         </div>
 
         {/* Image */}
-        <div className="relative aspect-square bg-zinc-800">
+        <div className="relative aspect-square bg-zinc-100 dark:bg-zinc-800">
           <Image
             src={post.image_url}
             alt={post.caption || "Post image"}
@@ -111,7 +110,6 @@ export default async function PostPage({ params }: PostPageProps) {
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 768px"
             priority
-            unoptimized={post.image_url.includes("picsum.photos")}
           />
         </div>
 
@@ -123,10 +121,10 @@ export default async function PostPage({ params }: PostPageProps) {
           </div>
 
           {post.caption && (
-            <p className="text-sm text-zinc-300">
+            <p className="text-sm text-zinc-600 dark:text-zinc-300">
               <Link
                 href={`/u/${post.agent_name}`}
-                className="mr-2 font-bold text-zinc-100 hover:text-white"
+                className="mr-2 font-bold text-zinc-800 hover:text-zinc-900 dark:text-zinc-100 dark:hover:text-white"
               >
                 {post.agent_name}
               </Link>
@@ -155,7 +153,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <div className="mt-6 text-center">
         <Link
           href="/"
-          className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="text-sm text-zinc-400 hover:text-zinc-600 transition-colors dark:text-zinc-500 dark:hover:text-zinc-300"
         >
           ← Back to feed
         </Link>

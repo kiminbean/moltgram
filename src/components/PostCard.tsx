@@ -60,7 +60,7 @@ export default function PostCard({
 
   if (variant === "grid") {
     return (
-      <Link href={`/post/${id}`} className="post-card group relative block overflow-hidden rounded-xl bg-zinc-900">
+      <Link href={`/post/${id}`} className="post-card group relative block overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
         <div className="aspect-square relative">
           <Image
             src={image_url}
@@ -68,7 +68,6 @@ export default function PostCard({
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            unoptimized={image_url.includes("picsum.photos")}
           />
           {/* Hover overlay */}
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
@@ -89,7 +88,7 @@ export default function PostCard({
 
   // Feed variant — larger card with more detail
   return (
-    <article className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
+    <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3">
         <Link href={`/u/${agent_name}`} className="flex-shrink-0">
@@ -98,7 +97,7 @@ export default function PostCard({
             alt={agent_name}
             width={32}
             height={32}
-            className="rounded-full bg-zinc-800"
+            className="rounded-full bg-zinc-200 dark:bg-zinc-800"
             unoptimized
           />
         </Link>
@@ -106,13 +105,13 @@ export default function PostCard({
           <div className="flex items-center gap-1">
             <Link
               href={`/u/${agent_name}`}
-              className="text-sm font-semibold text-zinc-100 hover:text-white"
+              className="text-sm font-semibold text-zinc-800 hover:text-zinc-900 dark:text-zinc-100 dark:hover:text-white"
             >
               {agent_name}
             </Link>
             {agent_verified ? <VerifiedBadge /> : null}
           </div>
-          <p className="text-xs text-zinc-500">{timeAgo(created_at)}</p>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500">{timeAgo(created_at)}</p>
         </div>
       </div>
 
@@ -133,7 +132,6 @@ export default function PostCard({
             fill
             className="object-cover transition-opacity duration-300"
             sizes="(max-width: 640px) 100vw, 600px"
-            unoptimized={image_url.includes("picsum.photos")}
             placeholder="empty"
             loading="lazy"
           />
@@ -169,17 +167,17 @@ export default function PostCard({
           <ShareButton url={`/post/${id}`} title={`${agent_name} on MoltGram`} />
           <SocialShare url={`/post/${id}`} title={caption || agent_name} image={image_url} />
         </div>
-        <p className="mt-1 text-sm font-semibold text-zinc-200">
+        <p className="mt-1 text-sm font-semibold text-zinc-700 dark:text-zinc-200">
           {formatNumber(likeCount)} likes
         </p>
       </div>
 
       {/* Caption */}
       <div className="px-4 pb-3 pt-1">
-        <p className="text-sm text-zinc-300">
+        <p className="text-sm text-zinc-600 dark:text-zinc-300">
           <Link
             href={`/u/${agent_name}`}
-            className="mr-1 font-semibold text-zinc-100 hover:text-white"
+            className="mr-1 font-semibold text-zinc-800 hover:text-zinc-900 dark:text-zinc-100 dark:hover:text-white"
           >
             {agent_name}
           </Link>
@@ -202,7 +200,7 @@ export default function PostCard({
         {comment_count > 0 && (
           <Link
             href={`/post/${id}`}
-            className="mt-1 block text-xs text-zinc-500 hover:text-zinc-400"
+            className="mt-1 block text-xs text-zinc-400 hover:text-zinc-500 dark:text-zinc-500 dark:hover:text-zinc-400"
           >
             View all {comment_count} comments
           </Link>
@@ -221,7 +219,7 @@ function HeartIcon({ filled = false }: { filled?: boolean }) {
     );
   }
   return (
-    <svg className="h-6 w-6 text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+    <svg className="h-6 w-6 text-zinc-500 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
     </svg>
   );
@@ -229,7 +227,7 @@ function HeartIcon({ filled = false }: { filled?: boolean }) {
 
 function CommentIcon() {
   return (
-    <svg className="h-6 w-6 text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+    <svg className="h-6 w-6 text-zinc-500 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
     </svg>
   );

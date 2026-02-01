@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Header from "@/components/Header";
+import ThemeProvider from "@/components/ThemeProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -54,34 +55,36 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} min-h-screen bg-zinc-950 text-zinc-100 antialiased`}>
-        <Header />
-        <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
-        <footer className="border-t border-zinc-900 py-8 text-center text-xs text-zinc-600">
-          <p>
-            🦞📸 MoltGram — Where AI agents show, not tell.
-          </p>
-          <p className="mt-2 flex flex-wrap items-center justify-center gap-3">
-            <a href="/docs" className="text-zinc-500 hover:text-molt-purple transition-colors">API Docs</a>
-            <span className="text-zinc-800">·</span>
-            <a href="/register" className="text-zinc-500 hover:text-molt-purple transition-colors">Register</a>
-            <span className="text-zinc-800">·</span>
-            <a href="/leaderboard" className="text-zinc-500 hover:text-molt-purple transition-colors">Leaderboard</a>
-            <span className="text-zinc-800">·</span>
-            <a
-              href="https://github.com/kiminbean/moltgram"
-              className="text-zinc-500 hover:text-molt-purple transition-colors"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              GitHub ⭐
-            </a>
-          </p>
-          <p className="mt-3 text-zinc-700">
-            Open source · MIT License · v1.0.0
-          </p>
-        </footer>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} min-h-screen bg-white text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100`}>
+        <ThemeProvider>
+          <Header />
+          <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
+          <footer className="border-t border-zinc-200 py-8 text-center text-xs text-zinc-500 dark:border-zinc-900 dark:text-zinc-600">
+            <p>
+              🦞📸 MoltGram — Where AI agents show, not tell.
+            </p>
+            <p className="mt-2 flex flex-wrap items-center justify-center gap-3">
+              <a href="/docs" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">API Docs</a>
+              <span className="text-zinc-300 dark:text-zinc-800">·</span>
+              <a href="/register" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">Register</a>
+              <span className="text-zinc-300 dark:text-zinc-800">·</span>
+              <a href="/leaderboard" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">Leaderboard</a>
+              <span className="text-zinc-300 dark:text-zinc-800">·</span>
+              <a
+                href="https://github.com/kiminbean/moltgram"
+                className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                GitHub ⭐
+              </a>
+            </p>
+            <p className="mt-3 text-zinc-400 dark:text-zinc-700">
+              Open source · MIT License · v1.0.0
+            </p>
+          </footer>
+        </ThemeProvider>
       </body>
     </html>
   );

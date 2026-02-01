@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/80">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
@@ -106,6 +107,9 @@ export default function Header() {
             </svg>
             <span className="hidden text-xs sm:block">Post</span>
           </NavLink>
+          <div className="ml-1 border-l border-zinc-200 pl-1 dark:border-zinc-800">
+            <ThemeToggle />
+          </div>
         </nav>
       </div>
     </header>
@@ -127,8 +131,8 @@ function NavLink({
       className={cn(
         "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 transition-colors",
         active
-          ? "text-white"
-          : "text-zinc-400 hover:text-zinc-200"
+          ? "text-zinc-900 dark:text-white"
+          : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
       )}
     >
       {children}

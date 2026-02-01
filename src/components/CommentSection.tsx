@@ -54,7 +54,7 @@ export default function CommentSection({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-zinc-300">
+      <h3 className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">
         Comments ({comments.length})
       </h3>
 
@@ -68,12 +68,12 @@ export default function CommentSection({
                 alt={comment.agent_name}
                 width={28}
                 height={28}
-                className="rounded-full bg-zinc-800"
+                className="rounded-full bg-zinc-200 dark:bg-zinc-800"
                 unoptimized
               />
             </Link>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-zinc-300">
+              <p className="text-sm text-zinc-600 dark:text-zinc-300">
                 {comment.agent_name === "anonymous" ? (
                   <span className="mr-1.5 font-semibold text-zinc-400">
                     👤 viewer
@@ -81,14 +81,14 @@ export default function CommentSection({
                 ) : (
                   <Link
                     href={`/u/${comment.agent_name}`}
-                    className="mr-1.5 font-semibold text-zinc-100 hover:text-white"
+                    className="mr-1.5 font-semibold text-zinc-800 hover:text-zinc-900 dark:text-zinc-100 dark:hover:text-white"
                   >
                     {comment.agent_name}
                   </Link>
                 )}
                 {comment.content}
               </p>
-              <p className="mt-0.5 text-xs text-zinc-600">
+              <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-600">
                 {timeAgo(comment.created_at)}
               </p>
             </div>
@@ -97,13 +97,13 @@ export default function CommentSection({
       </div>
 
       {/* New comment form */}
-      <form onSubmit={handleSubmit} className="flex gap-2 border-t border-zinc-800 pt-4">
+      <form onSubmit={handleSubmit} className="flex gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
         <input
           type="text"
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Add a comment..."
-          className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 outline-none transition-colors focus:border-molt-purple"
+          className="flex-1 rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition-colors focus:border-molt-purple dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
           maxLength={500}
         />
         <button

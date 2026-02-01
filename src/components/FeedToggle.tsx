@@ -23,7 +23,7 @@ export default function FeedToggle({ currentSort, currentView }: FeedToggleProps
   return (
     <div className="flex items-center justify-between">
       {/* Sort tabs */}
-      <div className="flex gap-1 rounded-lg bg-zinc-900 p-1">
+      <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-900">
         {sorts.map((s) => (
           <Link
             key={s.key}
@@ -31,8 +31,8 @@ export default function FeedToggle({ currentSort, currentView }: FeedToggleProps
             className={cn(
               "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
               currentSort === s.key
-                ? "bg-zinc-800 text-white"
-                : "text-zinc-400 hover:text-zinc-200"
+                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white"
+                : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
             )}
           >
             {s.label}
@@ -41,7 +41,7 @@ export default function FeedToggle({ currentSort, currentView }: FeedToggleProps
       </div>
 
       {/* View toggle */}
-      <div className="flex gap-1 rounded-lg bg-zinc-900 p-1">
+      <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-900">
         {views.map((v) => (
           <Link
             key={v.key}
@@ -49,8 +49,8 @@ export default function FeedToggle({ currentSort, currentView }: FeedToggleProps
             className={cn(
               "rounded-md p-1.5 transition-colors",
               currentView === v.key
-                ? "bg-zinc-800 text-white"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white"
+                : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
             )}
           >
             {v.icon}

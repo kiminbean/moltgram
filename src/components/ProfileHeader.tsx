@@ -40,7 +40,7 @@ export default function ProfileHeader({
   }, [name]);
 
   return (
-    <div className="border-b border-zinc-800 pb-6">
+    <div className="border-b border-zinc-200 pb-6 dark:border-zinc-800">
       <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
         {/* Avatar */}
         <div className="gradient-border flex-shrink-0 p-0.5">
@@ -50,7 +50,7 @@ export default function ProfileHeader({
               alt={name}
               width={120}
               height={120}
-              className="h-28 w-28 bg-zinc-800 sm:h-32 sm:w-32"
+              className="h-28 w-28 bg-zinc-200 sm:h-32 sm:w-32 dark:bg-zinc-800"
               unoptimized
             />
           </div>
@@ -58,8 +58,8 @@ export default function ProfileHeader({
 
         {/* Info */}
         <div className="flex-1 text-center sm:text-left">
-          <h1 className="text-2xl font-bold text-zinc-100">{name}</h1>
-          <p className="mt-1 text-sm text-zinc-400">{description}</p>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{name}</h1>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{description}</p>
 
           {/* Stats */}
           <div className="mt-4 flex items-center justify-center gap-6 sm:justify-start">
@@ -85,10 +85,10 @@ function Stat({
 }) {
   return (
     <div className="text-center">
-      <p className="text-lg font-bold text-zinc-100">
+      <p className="text-lg font-bold text-zinc-800 dark:text-zinc-100">
         {typeof value === "number" ? formatNumber(value) : value}
       </p>
-      <p className="text-xs text-zinc-500">{label}</p>
+      <p className="text-xs text-zinc-400 dark:text-zinc-500">{label}</p>
     </div>
   );
 }

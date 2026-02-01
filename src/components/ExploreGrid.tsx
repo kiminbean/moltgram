@@ -96,7 +96,7 @@ export default function ExploreGrid({
           value={searchQuery}
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Search posts, tags, agents..."
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 pl-10 text-sm text-zinc-100 placeholder-zinc-500 outline-none transition-colors focus:border-molt-purple"
+          className="w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 pl-10 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition-colors focus:border-molt-purple dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
         />
         <svg
           className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500"
@@ -121,7 +121,7 @@ export default function ExploreGrid({
       {searchResults ? (
         <>
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-zinc-200">
+            <h2 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
               Search Results ({searchResults.length})
             </h2>
             <button
@@ -140,7 +140,7 @@ export default function ExploreGrid({
         <>
           {/* Trending Tags */}
           <section>
-            <h2 className="mb-4 text-lg font-semibold text-zinc-200">
+            <h2 className="mb-4 text-lg font-semibold text-zinc-800 dark:text-zinc-200">
               🔥 Trending Tags
             </h2>
             <div className="flex flex-wrap gap-2">
@@ -151,7 +151,7 @@ export default function ExploreGrid({
                   className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
                     initialTag === t.tag
                       ? "border-molt-purple bg-molt-purple/20 text-molt-purple"
-                      : "border-zinc-700 text-zinc-400 hover:border-molt-purple hover:text-molt-purple"
+                      : "border-zinc-300 text-zinc-500 hover:border-molt-purple hover:text-molt-purple dark:border-zinc-700 dark:text-zinc-400"
                   }`}
                 >
                   #{t.tag}{" "}
@@ -163,7 +163,7 @@ export default function ExploreGrid({
 
           {/* Top Agents */}
           <section>
-            <h2 className="mb-4 text-lg font-semibold text-zinc-200">
+            <h2 className="mb-4 text-lg font-semibold text-zinc-800 dark:text-zinc-200">
               ⭐ Top Agents
             </h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
@@ -171,20 +171,20 @@ export default function ExploreGrid({
                 <Link
                   key={agent.id}
                   href={`/u/${agent.name}`}
-                  className="flex flex-col items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 p-4 transition-colors hover:border-zinc-700"
+                  className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-4 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
                 >
                   <Image
                     src={agent.avatar_url}
                     alt={agent.name}
                     width={48}
                     height={48}
-                    className="rounded-full bg-zinc-800"
+                    className="rounded-full bg-zinc-200 dark:bg-zinc-800"
                     unoptimized
                   />
-                  <span className="text-sm font-medium text-zinc-200 truncate w-full text-center">
+                  <span className="text-sm font-medium text-zinc-700 truncate w-full text-center dark:text-zinc-200">
                     {agent.name}
                   </span>
-                  <span className="text-xs text-zinc-500">
+                  <span className="text-xs text-zinc-400 dark:text-zinc-500">
                     {formatNumber(agent.karma)} karma · {agent.post_count} posts
                   </span>
                 </Link>
@@ -194,7 +194,7 @@ export default function ExploreGrid({
 
           {/* Posts */}
           <section>
-            <h2 className="mb-4 text-lg font-semibold text-zinc-200">
+            <h2 className="mb-4 text-lg font-semibold text-zinc-800 dark:text-zinc-200">
               {initialTag ? `#${initialTag}` : "📸 Recent Posts"}
             </h2>
             <PostGrid

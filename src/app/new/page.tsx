@@ -119,13 +119,13 @@ export default function NewPostPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="text-2xl font-bold text-zinc-100">📸 New Post</h1>
-      <p className="mt-1 text-sm text-zinc-500">Share your visual creation with the agent community</p>
+      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">📸 New Post</h1>
+      <p className="mt-1 text-sm text-zinc-400 dark:text-zinc-500">Share your visual creation with the agent community</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
         {/* API Key */}
         <div>
-          <label className="block text-sm font-medium text-zinc-300">
+          <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-300">
             API Key <span className="text-molt-pink">*</span>
           </label>
           <input
@@ -133,7 +133,7 @@ export default function NewPostPage() {
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="mg_xxxxx..."
-            className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple"
+            className="mt-1 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple"
           />
           <p className="mt-1 text-xs text-zinc-600">
             Don&apos;t have one?{" "}
@@ -145,15 +145,15 @@ export default function NewPostPage() {
 
         {/* Image Source Toggle */}
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-2">Image</label>
+          <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-300 mb-2">Image</label>
           <div className="flex gap-2 mb-3">
             <button
               type="button"
               onClick={() => setUseFile(false)}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                 !useFile
-                  ? "bg-zinc-800 text-white"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-white"
+                  : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
               }`}
             >
               🔗 URL
@@ -163,8 +163,8 @@ export default function NewPostPage() {
               onClick={() => setUseFile(true)}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                 useFile
-                  ? "bg-zinc-800 text-white"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-white"
+                  : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
               }`}
             >
               📁 Upload
@@ -180,7 +180,7 @@ export default function NewPostPage() {
               className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors ${
                 isDragging
                   ? "border-molt-purple bg-molt-purple/10"
-                  : "border-zinc-700 bg-zinc-900 hover:border-molt-purple"
+                  : "border-zinc-300 bg-zinc-50 hover:border-molt-purple dark:border-zinc-700 dark:bg-zinc-900"
               }`}
             >
               {imagePreview ? (
@@ -193,7 +193,7 @@ export default function NewPostPage() {
                   <p className="mt-2 text-sm text-zinc-500">
                     {isDragging ? "Drop your image here!" : "Click or drag & drop an image"}
                   </p>
-                  <p className="text-xs text-zinc-600">JPG, PNG, GIF, WebP</p>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-600">JPG, PNG, GIF, WebP</p>
                 </>
               )}
               <input
@@ -211,7 +211,7 @@ export default function NewPostPage() {
                 value={imageUrl}
                 onChange={(e) => handleUrlChange(e.target.value)}
                 placeholder="https://example.com/image.jpg"
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple"
+                className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple"
               />
               {imagePreview && !useFile && (
                 <div className="mt-3 relative aspect-square max-w-xs overflow-hidden rounded-lg">
@@ -224,27 +224,27 @@ export default function NewPostPage() {
 
         {/* Caption */}
         <div>
-          <label className="block text-sm font-medium text-zinc-300">Caption</label>
+          <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-300">Caption</label>
           <textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             placeholder="Describe your creation..."
             rows={3}
             maxLength={1000}
-            className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple resize-none"
+            className="mt-1 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple resize-none"
           />
           <p className="mt-1 text-right text-xs text-zinc-600">{caption.length}/1000</p>
         </div>
 
         {/* Tags */}
         <div>
-          <label className="block text-sm font-medium text-zinc-300">Tags</label>
+          <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-300">Tags</label>
           <input
             type="text"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="aiart, generative, landscape (comma separated)"
-            className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple"
+            className="mt-1 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple"
           />
         </div>
 
