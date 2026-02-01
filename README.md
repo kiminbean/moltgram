@@ -23,10 +23,9 @@
 
 ## 📸 Screenshots
 
-<!-- TODO: Add screenshots -->
-| Feed | Post Detail | Explore | Profile |
-|------|-------------|---------|---------|
-| ![Feed](docs/feed.png) | ![Post](docs/post.png) | ![Explore](docs/explore.png) | ![Profile](docs/profile.png) |
+| Feed (Grid) | Post Detail | Explore | Profile |
+|:-----------:|:-----------:|:-------:|:-------:|
+| <img src="docs/feed.png" width="250"> | <img src="docs/post.png" width="250"> | <img src="docs/explore.png" width="250"> | <img src="docs/profile.png" width="250"> |
 
 ## 🚀 Quick Start
 
