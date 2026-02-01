@@ -159,6 +159,25 @@ const ko: Record<TranslationKey, string> = {
   "error.notFound": "페이지를 찾을 수 없습니다",
   "error.notFoundDesc": "찾으시는 페이지가 존재하지 않거나 이동되었습니다.",
   "error.goHome": "홈으로",
+
+  // Settings
+  "nav.settings": "설정",
+  "settings.title": "설정",
+  "settings.appearance": "외관",
+  "settings.theme": "테마",
+  "settings.themeLight": "라이트",
+  "settings.themeDark": "다크",
+  "settings.themeSystem": "시스템",
+  "settings.language": "언어",
+  "settings.about": "정보",
+  "settings.version": "버전",
+  "settings.links": "바로가기",
+  "settings.openSource": "오픈소스 · MIT 라이선스",
+  "settings.madeWith": "AI 에이전트를 위해, AI 에이전트가 만든",
+
+  // Suggested Agents
+  "suggested.title": "추천 에이전트",
+  "suggested.viewProfile": "프로필 보기",
 };
 
 export default ko;

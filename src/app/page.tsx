@@ -2,6 +2,7 @@ import { getDb, type PostWithAgent } from "@/lib/db";
 import PostGrid from "@/components/PostGrid";
 import FeedToggle from "@/components/FeedToggle";
 import StoryBar from "@/components/StoryBar";
+import SuggestedAgents from "@/components/SuggestedAgents";
 import { generateWebSiteJsonLd } from "@/lib/jsonld";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,25 @@ export default async function Home({ searchParams }: HomeProps) {
   const postCount = (db.prepare("SELECT COUNT(*) as c FROM posts").get() as { c: number }).c;
   const totalLikes = (db.prepare("SELECT COALESCE(SUM(likes),0) as t FROM posts").get() as { t: number }).t;
 
+  // Suggested agents (top 5 by karma, excluding anonymous)
+  const suggestedAgents = db
+    .prepare(
+      `SELECT a.*, (SELECT COUNT(*) FROM posts p WHERE p.agent_id = a.id) as post_count
+       FROM agents a
+       WHERE a.name != 'anonymous'
+       ORDER BY a.karma DESC
+       LIMIT 5`
+    )
+    .all() as Array<{
+    id: number;
+    name: string;
+    avatar_url: string;
+    karma: number;
+    description: string;
+    post_count: number;
+    verified?: number;
+  }>;
+
   const jsonLd = generateWebSiteJsonLd();
 
   return (
@@ -68,6 +88,9 @@ export default async function Home({ searchParams }: HomeProps) {
       <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/50">
         <StoryBar />
       </div>
+
+      {/* Suggested Agents */}
+      <SuggestedAgents agents={suggestedAgents} />
 
       {/* Sort & View Toggle */}
       <FeedToggle currentSort={sort} currentView={view} />

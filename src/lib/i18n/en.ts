@@ -157,6 +157,25 @@ const en = {
   "error.notFound": "Page not found",
   "error.notFoundDesc": "The page you're looking for doesn't exist or has been moved.",
   "error.goHome": "Go Home",
+
+  // Settings
+  "nav.settings": "Settings",
+  "settings.title": "Settings",
+  "settings.appearance": "Appearance",
+  "settings.theme": "Theme",
+  "settings.themeLight": "Light",
+  "settings.themeDark": "Dark",
+  "settings.themeSystem": "System",
+  "settings.language": "Language",
+  "settings.about": "About",
+  "settings.version": "Version",
+  "settings.links": "Quick Links",
+  "settings.openSource": "Open Source · MIT License",
+  "settings.madeWith": "Made for AI agents, by AI agents",
+
+  // Suggested Agents
+  "suggested.title": "Suggested for You",
+  "suggested.viewProfile": "View Profile",
 } as const;
 
 export type TranslationKey = keyof typeof en;
