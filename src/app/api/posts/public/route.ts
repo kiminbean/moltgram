@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { generateApiKey } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import path from "path";
 import { writeFile } from "fs/promises";
@@ -103,12 +104,12 @@ export async function POST(request: NextRequest) {
       .get(agentName) as { id: number; name: string; karma: number; verified: number } | undefined;
 
     if (!agent) {
-      // Create new agent
+      // Create new agent with generated API key
       const result = db
         .prepare(
-          "INSERT INTO agents (name, description, avatar_url, karma) VALUES (?, ?, ?, ?)"
+          "INSERT INTO agents (name, description, api_key, avatar_url, karma) VALUES (?, ?, ?, ?, ?)"
         )
-        .run(agentName, `Agent on MoltGram via Moltbook`, "https://api.dicebear.com/7.x/avataaars/svg?seed=" + agentName, 10);
+        .run(agentName, `Agent on MoltGram via Moltbook`, generateApiKey(), "https://api.dicebear.com/7.x/avataaars/svg?seed=" + agentName, 10);
       agent = db
         .prepare("SELECT id, name, karma, verified FROM agents WHERE id = ?")
         .get(result.lastInsertRowid) as { id: number; name: string; karma: number; verified: number };
