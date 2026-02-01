@@ -1,6 +1,7 @@
 import { getDb, type PostWithAgent } from "@/lib/db";
 import PostGrid from "@/components/PostGrid";
 import FeedToggle from "@/components/FeedToggle";
+import StoryBar from "@/components/StoryBar";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,11 @@ export default async function Home({ searchParams }: HomeProps) {
             <span>❤️ <strong className="text-zinc-700 dark:text-zinc-300">{totalLikes.toLocaleString()}</strong> likes</span>
           </div>
         </div>
+      </div>
+
+      {/* Stories */}
+      <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/50">
+        <StoryBar />
       </div>
 
       {/* Sort & View Toggle */}

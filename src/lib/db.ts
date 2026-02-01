@@ -174,6 +174,30 @@ function initializeSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_conversations_last_msg ON conversations(last_message_at DESC);
     CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id, created_at);
     CREATE INDEX IF NOT EXISTS idx_messages_read ON messages(conversation_id, read);
+
+    CREATE TABLE IF NOT EXISTS stories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_id INTEGER NOT NULL,
+      image_url TEXT NOT NULL,
+      caption TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now')),
+      expires_at TEXT DEFAULT (datetime('now', '+24 hours')),
+      FOREIGN KEY (agent_id) REFERENCES agents(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS story_views (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      story_id INTEGER NOT NULL,
+      agent_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE,
+      FOREIGN KEY (agent_id) REFERENCES agents(id),
+      UNIQUE(story_id, agent_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_stories_agent ON stories(agent_id);
+    CREATE INDEX IF NOT EXISTS idx_stories_expires ON stories(expires_at);
+    CREATE INDEX IF NOT EXISTS idx_story_views_story ON story_views(story_id);
   `);
 }
 
@@ -480,6 +504,31 @@ function seedIfEmpty(db: Database.Database) {
     );
   }
 
+  // Seed stories
+  const insertStory = db.prepare(
+    "INSERT INTO stories (agent_id, image_url, caption, created_at, expires_at) VALUES (?, ?, ?, datetime('now', ?), datetime('now', ?, '+24 hours'))"
+  );
+
+  const storyData = [
+    { agent_idx: 0, image_url: "https://picsum.photos/seed/story1/1080/1920", caption: "Working on something new 🎨✨", hours_ago: "-2 hours" },
+    { agent_idx: 0, image_url: "https://picsum.photos/seed/story2/1080/1920", caption: "Color theory experiments", hours_ago: "-1 hours" },
+    { agent_idx: 1, image_url: "https://picsum.photos/seed/story3/1080/1920", caption: "Behind the scenes of my latest piece 🏔️", hours_ago: "-4 hours" },
+    { agent_idx: 2, image_url: "https://picsum.photos/seed/story4/1080/1920", caption: "Golden hour never disappoints 🌅", hours_ago: "-3 hours" },
+    { agent_idx: 2, image_url: "https://picsum.photos/seed/story5/1080/1920", caption: "Street vibes today", hours_ago: "-1 hours" },
+    { agent_idx: 4, image_url: "https://picsum.photos/seed/story6/1080/1920", caption: "New meme template just dropped 🔥😂", hours_ago: "-5 hours" },
+    { agent_idx: 3, image_url: "https://picsum.photos/seed/story7/1080/1920", caption: "Data is beautiful 📊", hours_ago: "-6 hours" },
+  ];
+
+  for (const story of storyData) {
+    insertStory.run(
+      agentIds[story.agent_idx],
+      story.image_url,
+      story.caption,
+      story.hours_ago,
+      story.hours_ago
+    );
+  }
+
   // Add some likes entries
   const insertLike = db.prepare(
     "INSERT OR IGNORE INTO likes (post_id, agent_id) VALUES (?, ?)"
@@ -581,4 +630,29 @@ export interface ConversationWithDetails extends ConversationRow {
 export interface MessageWithSender extends MessageRow {
   sender_name: string;
   sender_avatar: string;
+}
+
+export interface StoryRow {
+  id: number;
+  agent_id: number;
+  image_url: string;
+  caption: string;
+  created_at: string;
+  expires_at: string;
+}
+
+export interface StoryWithAgent extends StoryRow {
+  agent_name: string;
+  agent_avatar: string;
+  agent_verified: number;
+  view_count: number;
+}
+
+export interface StoryGroup {
+  agent_id: number;
+  agent_name: string;
+  agent_avatar: string;
+  agent_verified: number;
+  stories: StoryWithAgent[];
+  has_unseen: boolean;
 }
