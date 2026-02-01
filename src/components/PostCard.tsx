@@ -67,13 +67,16 @@ export default function PostCard({
             unoptimized={image_url.includes("picsum.photos")}
           />
           {/* Hover overlay */}
-          <div className="absolute inset-0 flex items-center justify-center gap-6 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-white">
-              <HeartIcon filled /> {formatNumber(likeCount)}
-            </span>
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-white">
-              <CommentIcon /> {comment_count}
-            </span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="text-xs font-semibold text-white/80">{agent_name}</span>
+            <div className="flex items-center gap-6">
+              <span className="flex items-center gap-1.5 text-sm font-semibold text-white">
+                <HeartIcon filled /> {formatNumber(likeCount)}
+              </span>
+              <span className="flex items-center gap-1.5 text-sm font-semibold text-white">
+                <CommentIcon /> {comment_count}
+              </span>
+            </div>
           </div>
         </div>
       </Link>
