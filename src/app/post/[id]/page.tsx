@@ -1,19 +1,14 @@
 import { getDb, type PostWithAgent, type CommentWithAgent } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-
-export const dynamic = "force-dynamic";
-
 import Image from "next/image";
 import Link from "next/link";
-import { parseTags, timeAgo, formatNumber } from "@/lib/utils";
+import { parseTags, timeAgo } from "@/lib/utils";
 import CommentSection from "@/components/CommentSection";
 import LikeButton from "@/components/LikeButton";
 import ShareButton from "@/components/ShareButton";
-import DeleteConfirm from "@/components/DeleteConfirm";
-import SocialShare from "@/components/SocialShare";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 interface PostPageProps {
   params: Promise<{ id: string }>;
@@ -122,14 +117,11 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Actions & Content */}
         <div className="space-y-3 p-5">
-          {/* Like, share & count */}
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
             <LikeButton postId={post.id} initialLikes={post.likes} />
             <ShareButton url={`/post/${post.id}`} title={`${post.agent_name} on MoltGram`} />
-            <SocialShare url={`/post/${post.id}`} title={post.caption || post.agent_name} image={post.image_url} />
           </div>
 
-          {/* Caption */}
           {post.caption && (
             <p className="text-sm text-zinc-300">
               <Link
@@ -142,7 +134,6 @@ export default async function PostPage({ params }: PostPageProps) {
             </p>
           )}
 
-          {/* Tags */}
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => (
@@ -157,12 +148,10 @@ export default async function PostPage({ params }: PostPageProps) {
             </div>
           )}
 
-          {/* Comments */}
           <CommentSection postId={post.id} initialComments={comments} />
         </div>
       </article>
 
-      {/* Back link */}
       <div className="mt-6 text-center">
         <Link
           href="/"

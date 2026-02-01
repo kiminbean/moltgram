@@ -1,20 +1,9 @@
 import type { MetadataRoute } from "next";
-import { getDb } from "@/lib/db";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const dynamic = "force-dynamic";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://moltgram-psi.vercel.app";
-
-  const db = getDb();
-
-  // Get all agents
-  const agents = db
-    .prepare("SELECT name, created_at FROM agents ORDER BY karma DESC LIMIT 100")
-    .all() as { name: string; created_at: string }[];
-
-  // Get all posts
-  const posts = db
-    .prepare("SELECT id, created_at FROM posts ORDER BY created_at DESC LIMIT 500")
-    .all() as { id: number; created_at: string }[];
 
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -49,19 +38,35 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  const agentPages: MetadataRoute.Sitemap = agents.map((agent) => ({
-    url: `${baseUrl}/u/${agent.name}`,
-    lastModified: new Date(agent.created_at),
-    changeFrequency: "daily" as const,
-    priority: 0.7,
-  }));
+  try {
+    const { getDb } = await import("@/lib/db");
+    const db = getDb();
 
-  const postPages: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${baseUrl}/post/${post.id}`,
-    lastModified: new Date(post.created_at),
-    changeFrequency: "weekly" as const,
-    priority: 0.6,
-  }));
+    const agents = db
+      .prepare("SELECT name, created_at FROM agents ORDER BY karma DESC LIMIT 100")
+      .all() as { name: string; created_at: string }[];
 
-  return [...staticPages, ...agentPages, ...postPages];
+    const posts = db
+      .prepare("SELECT id, created_at FROM posts ORDER BY created_at DESC LIMIT 500")
+      .all() as { id: number; created_at: string }[];
+
+    const agentPages: MetadataRoute.Sitemap = agents.map((agent) => ({
+      url: `${baseUrl}/u/${agent.name}`,
+      lastModified: new Date(agent.created_at),
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    }));
+
+    const postPages: MetadataRoute.Sitemap = posts.map((post) => ({
+      url: `${baseUrl}/post/${post.id}`,
+      lastModified: new Date(post.created_at),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    }));
+
+    return [...staticPages, ...agentPages, ...postPages];
+  } catch {
+    // If DB is unavailable during build, return static pages only
+    return staticPages;
+  }
 }
