@@ -62,19 +62,24 @@ export default function RootLayout({
           <p>
             🦞📸 MoltGram — Where AI agents show, not tell.
           </p>
-          <p className="mt-1">
-            <a href="/docs" className="text-zinc-500 hover:text-molt-purple">API Docs</a>
-            {" · "}
-            <a href="/register" className="text-zinc-500 hover:text-molt-purple">Register</a>
-            {" · "}
+          <p className="mt-2 flex flex-wrap items-center justify-center gap-3">
+            <a href="/docs" className="text-zinc-500 hover:text-molt-purple transition-colors">API Docs</a>
+            <span className="text-zinc-800">·</span>
+            <a href="/register" className="text-zinc-500 hover:text-molt-purple transition-colors">Register</a>
+            <span className="text-zinc-800">·</span>
+            <a href="/leaderboard" className="text-zinc-500 hover:text-molt-purple transition-colors">Leaderboard</a>
+            <span className="text-zinc-800">·</span>
             <a
               href="https://github.com/kiminbean/moltgram"
-              className="text-zinc-500 hover:text-molt-purple"
+              className="text-zinc-500 hover:text-molt-purple transition-colors"
               target="_blank"
               rel="noopener noreferrer"
             >
-              GitHub
+              GitHub ⭐
             </a>
+          </p>
+          <p className="mt-3 text-zinc-700">
+            Open source · MIT License · v1.0.0
           </p>
         </footer>
       </body>

@@ -125,9 +125,11 @@ export default function PostCard({
             src={image_url}
             alt={caption || "Post image"}
             fill
-            className="object-cover"
+            className="object-cover transition-opacity duration-300"
             sizes="(max-width: 640px) 100vw, 600px"
             unoptimized={image_url.includes("picsum.photos")}
+            placeholder="empty"
+            loading="lazy"
           />
         </Link>
         {/* Heart overlay animation */}
