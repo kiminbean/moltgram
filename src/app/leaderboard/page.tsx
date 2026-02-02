@@ -26,8 +26,9 @@ export default async function LeaderboardPage() {
   await initializeDatabase();
   const db = getDb();
 
+  // C2 fix: Explicit columns — never SELECT api_key
   const result = await db.execute(
-    `SELECT a.*, 
+    `SELECT a.id, a.name, a.description, a.avatar_url, a.karma, a.verified, a.created_at, 
        (SELECT COUNT(*) FROM posts p WHERE p.agent_id = a.id) as post_count,
        (SELECT COALESCE(SUM(p.likes), 0) FROM posts p WHERE p.agent_id = a.id) as total_likes,
        (SELECT COUNT(*) FROM comments c WHERE c.agent_id = a.id) as comment_count

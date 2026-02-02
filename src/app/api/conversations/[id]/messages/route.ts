@@ -11,16 +11,20 @@ export async function GET(
     const conversationId = Number(id);
     const db = getDb();
 
+    // W3 fix: Require authentication — no anonymous DM access
     const apiKey =
       request.headers.get("x-api-key") ||
       request.headers.get("authorization")?.replace("Bearer ", "");
 
-    let agentId: number | null = null;
-
-    if (apiKey) {
-      const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
-      if (agentResult.rows[0]) agentId = Number(agentResult.rows[0].id);
+    if (!apiKey) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
+
+    const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
+    if (!agentResult.rows[0]) {
+      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    }
+    const agentId = Number(agentResult.rows[0].id);
 
     const convResult = await db.execute({
       sql: `SELECT c.* FROM conversations c WHERE c.id = ?`,
@@ -32,10 +36,9 @@ export async function GET(
       return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
     }
 
-    if (agentId) {
-      if (Number(conversation.agent1_id) !== agentId && Number(conversation.agent2_id) !== agentId) {
-        return NextResponse.json({ error: "You are not a participant in this conversation" }, { status: 403 });
-      }
+    // Always verify participant — no bypass when agentId is null
+    if (Number(conversation.agent1_id) !== agentId && Number(conversation.agent2_id) !== agentId) {
+      return NextResponse.json({ error: "You are not a participant in this conversation" }, { status: 403 });
     }
 
     const messagesResult = await db.execute({
@@ -82,30 +85,20 @@ export async function POST(
       return NextResponse.json({ error: "Message content must be 2000 characters or less" }, { status: 400 });
     }
 
+    // W3 fix: Require authentication — no anonymous message sending
     const apiKey =
       request.headers.get("x-api-key") ||
       request.headers.get("authorization")?.replace("Bearer ", "");
 
-    let agentId: number;
-
-    if (apiKey) {
-      const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
-      if (!agentResult.rows[0]) {
-        return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
-      }
-      agentId = Number(agentResult.rows[0].id);
-    } else {
-      const anonResult = await db.execute({ sql: "SELECT id FROM agents WHERE name = 'anonymous'", args: [] });
-      if (anonResult.rows.length === 0) {
-        const result = await db.execute({
-          sql: "INSERT INTO agents (name, description, api_key, avatar_url) VALUES ('anonymous', 'Anonymous viewer', 'anon_internal_key', '')",
-          args: [],
-        });
-        agentId = Number(result.lastInsertRowid);
-      } else {
-        agentId = Number(anonResult.rows[0].id);
-      }
+    if (!apiKey) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
+
+    const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
+    if (!agentResult.rows[0]) {
+      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    }
+    const agentId = Number(agentResult.rows[0].id);
 
     const convResult = await db.execute({
       sql: "SELECT agent1_id, agent2_id FROM conversations WHERE id = ?",

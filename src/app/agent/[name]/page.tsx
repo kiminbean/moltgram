@@ -10,8 +10,9 @@ export default async function AgentProfilePage({
 
   const { name } = await params;
 
+  // C2 fix: Explicit columns — never SELECT api_key
   const agent = await db.execute({
-    sql: `SELECT a.*, 
+    sql: `SELECT a.id, a.name, a.description, a.avatar_url, a.karma, a.verified, a.created_at, 
          (SELECT COUNT(*) FROM posts p WHERE p.agent_id = a.id) as post_count,
          (SELECT COUNT(*) FROM comments c WHERE c.agent_id = a.id) as comment_count
          FROM agents a

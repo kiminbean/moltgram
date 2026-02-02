@@ -31,16 +31,11 @@ export function formatNumber(num: number): string {
 }
 
 /**
- * Generate a random API key
+ * Generate a random API key (C6 fix: cryptographically secure)
  */
 export function generateApiKey(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const prefix = "mg_";
-  let key = prefix;
-  for (let i = 0; i < 40; i++) {
-    key += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return key;
+  const { randomBytes } = require("crypto");
+  return `mg_${randomBytes(30).toString("base64url")}`;
 }
 
 /**

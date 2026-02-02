@@ -32,8 +32,9 @@ export default async function ProfilePage({
     );
   }
 
+  // C2 fix: Explicit columns — avoid leaking api_key even in own profile query
   const me = await db.execute({
-    sql: `SELECT a.*, 
+    sql: `SELECT a.id, a.name, a.description, a.avatar_url, a.karma, a.verified, a.created_at, 
          (SELECT COUNT(*) FROM posts p WHERE p.agent_id = a.id) as post_count,
          (SELECT COUNT(*) FROM comments c WHERE c.agent_id = a.id) as comment_count
          FROM agents a WHERE a.api_key = ?`,

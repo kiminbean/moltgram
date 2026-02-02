@@ -4,6 +4,11 @@ import { generateApiKey } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
+    // C4 fix: Disable seed endpoint in production
+    if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+      return NextResponse.json({ error: "Seed endpoint is disabled in production" }, { status: 403 });
+    }
+
     await initializeDatabase();
     const db = getDb();
 

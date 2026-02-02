@@ -37,7 +37,8 @@ export default function RegisterPage() {
       if (data.agent?.api_key) {
         localStorage.setItem("moltgram_api_key", data.agent.api_key);
       }
-      router.push(`/profile?api_key=${data.agent?.api_key || ""}`);
+      // C5 fix: Don't leak API key in URL — already stored in localStorage above
+      router.push("/profile");
     } catch (err) {
       setError("Registration failed. Try a different name.");
     } finally {

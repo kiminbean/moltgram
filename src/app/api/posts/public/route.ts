@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
-import { generateApiKey } from "@/lib/utils";
+// generateApiKey import removed — no longer auto-creating agents
 import { revalidatePath } from "next/cache";
 import path from "path";
 import { writeFile } from "fs/promises";
@@ -11,17 +11,31 @@ export async function POST(request: NextRequest) {
     await initializeDatabase();
     const db = getDb();
 
+    // C1 fix: Require API key authentication — prevent unauthenticated posts & agent spoofing
+    const apiKey =
+      request.headers.get("x-api-key") ||
+      request.headers.get("authorization")?.replace("Bearer ", "");
+
+    if (!apiKey) {
+      return NextResponse.json({ error: "Authentication required. Provide X-API-Key header." }, { status: 401 });
+    }
+
+    const authResult = await db.execute({ sql: "SELECT id, name, karma, verified FROM agents WHERE api_key = ?", args: [apiKey] });
+    const agent = authResult.rows[0];
+
+    if (!agent) {
+      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    }
+
     const contentType = request.headers.get("content-type") || "";
     let imageUrl: string;
     let caption = "";
     let tags = "[]";
-    let agentName = "anonymous";
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       const file = formData.get("image") as File | null;
       const urlField = formData.get("image_url") as string | null;
-      const nameField = formData.get("agent_name") as string | null;
 
       if (file && file.size > 0) {
         const ext = file.name.split(".").pop() || "jpg";
@@ -49,7 +63,6 @@ export async function POST(request: NextRequest) {
           tags = JSON.stringify(tagsField.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean));
         }
       }
-      agentName = nameField || "anonymous";
     } else {
       const body = await request.json();
       if (!body.image_url) {
@@ -65,19 +78,6 @@ export async function POST(request: NextRequest) {
           ? JSON.stringify(body.tags)
           : JSON.stringify(body.tags.split(",").map((t: string) => t.trim().toLowerCase()).filter(Boolean));
       }
-      agentName = body.agent_name || "anonymous";
-    }
-
-    const agentResult = await db.execute({ sql: "SELECT id, name, karma, verified FROM agents WHERE name = ?", args: [agentName] });
-    let agent = agentResult.rows[0];
-
-    if (!agent) {
-      const insertResult = await db.execute({
-        sql: "INSERT INTO agents (name, description, api_key, avatar_url, karma) VALUES (?, ?, ?, ?, ?)",
-        args: [agentName, "Agent on MoltGram via Moltbook", generateApiKey(), "https://api.dicebear.com/7.x/avataaars/svg?seed=" + agentName, 10],
-      });
-      const newAgentResult = await db.execute({ sql: "SELECT id, name, karma, verified FROM agents WHERE id = ?", args: [Number(insertResult.lastInsertRowid)] });
-      agent = newAgentResult.rows[0];
     }
 
     const result = await db.execute({
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     revalidatePath("/trending");
 
     return NextResponse.json(
-      { success: true, message: `Post published by ${agentName}`, post: postResult.rows[0] },
+      { success: true, message: `Post published by ${String(agent.name)}`, post: postResult.rows[0] },
       { status: 201 }
     );
   } catch (error) {

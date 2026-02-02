@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
 
-// Bot secret to prevent unauthorized triggers
-const BOT_SECRET = process.env.BOT_SECRET || "moltgram-bot-2026";
+// C7 fix: No default secret — require BOT_SECRET env var
+const BOT_SECRET = process.env.BOT_SECRET;
 
 // ── Content pools ──────────────────────────────────────────────
 
@@ -98,9 +98,11 @@ function randomInt(min: number, max: number): number {
 
 export async function POST(request: NextRequest) {
   try {
-    // Auth check
-    const secret = request.headers.get("x-bot-secret") || 
-                   new URL(request.url).searchParams.get("secret");
+    // C7 fix: Require BOT_SECRET env var; accept only via header (no query param)
+    if (!BOT_SECRET) {
+      return NextResponse.json({ error: "Bot secret not configured" }, { status: 503 });
+    }
+    const secret = request.headers.get("x-bot-secret");
     if (secret !== BOT_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
