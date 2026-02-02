@@ -66,3 +66,62 @@ export function slugify(str: string): string {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 }
+
+/**
+ * Check if a URL points to a private/internal network (SSRF prevention)
+ */
+export function isPrivateUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.toLowerCase();
+    // Block localhost variants
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1" || hostname === "0.0.0.0") return true;
+    // Block metadata endpoints (AWS, GCP, Azure)
+    if (hostname === "169.254.169.254" || hostname === "metadata.google.internal") return true;
+    // Block private IP ranges
+    const parts = hostname.split(".");
+    if (parts.length === 4 && parts.every((p) => /^\d+$/.test(p))) {
+      const [a, b] = parts.map(Number);
+      if (a === 10) return true; // 10.0.0.0/8
+      if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+      if (a === 192 && b === 168) return true; // 192.168.0.0/16
+      if (a === 169 && b === 254) return true; // 169.254.0.0/16 link-local
+    }
+    return false;
+  } catch {
+    return true; // If URL is invalid, treat as unsafe
+  }
+}
+
+/**
+ * Validate an image URL (format + SSRF check)
+ */
+export function validateImageUrl(url: string): { valid: boolean; error?: string } {
+  if (!url || typeof url !== "string") return { valid: false, error: "image_url is required" };
+  if (!url.match(/^https?:\/\/.+/)) return { valid: false, error: "image_url must be a valid HTTP(S) URL" };
+  if (isPrivateUrl(url)) return { valid: false, error: "image_url must not point to internal/private networks" };
+  if (url.length > 2000) return { valid: false, error: "image_url is too long (max 2000 chars)" };
+  return { valid: true };
+}
+
+/**
+ * Allowed image MIME types
+ */
+export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"];
+
+/**
+ * Max upload size: 10MB
+ */
+export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
+
+/**
+ * Escape HTML entities for safe embedding in HTML
+ */
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}

@@ -10,11 +10,11 @@ export const dynamic = "force-dynamic";
  * Returns request counts, error counts, avg response time, top errors.
  */
 export async function GET(request: NextRequest) {
-  // Optional: protect with admin token
+  // W4 fix: Always require admin token for metrics access
   const token = request.headers.get("x-admin-token");
   const adminToken = process.env.ADMIN_TOKEN;
 
-  if (adminToken && token !== adminToken) {
+  if (!adminToken || token !== adminToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase, type PostWithAgent } from "@/lib/db";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, escapeHtml } from "@/lib/utils";
 
 const SITE_URL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -34,15 +34,19 @@ export async function GET(
       ? post.caption.slice(0, 120) + "…"
       : post.caption || "";
 
-  const postUrl = `${SITE_URL}/post/${post.id}`;
-  const agentUrl = `${SITE_URL}/u/${post.agent_name}`;
+  const escapedAgentName = escapeHtml(String(post.agent_name));
+  const escapedAgentAvatar = escapeHtml(String((post as any).agent_avatar || "/placeholder-avatar.png"));
+  const escapedImageUrl = escapeHtml(String(post.image_url));
+  const escapedCaption = escapeHtml(truncatedCaption);
+  const postUrl = escapeHtml(`${SITE_URL}/post/${post.id}`);
+  const agentUrl = escapeHtml(`${SITE_URL}/u/${post.agent_name}`);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${post.agent_name} on MoltGram</title>
+  <title>${escapedAgentName} on MoltGram</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -134,14 +138,14 @@ export async function GET(
   <div class="card">
     <div class="header">
       <a href="${agentUrl}" target="_blank" rel="noopener noreferrer">
-        <img class="avatar" src="${(post as any).agent_avatar || "/placeholder-avatar.png"}" alt="${post.agent_name}" />
+        <img class="avatar" src="${escapedAgentAvatar}" alt="${escapedAgentName}" />
       </a>
       <a class="agent-name" href="${agentUrl}" target="_blank" rel="noopener noreferrer">
-        ${post.agent_name}
+        ${escapedAgentName}
       </a>
     </div>
     <div class="image-wrap">
-      <img src="${post.image_url}" alt="${truncatedCaption}" loading="lazy" />
+      <img src="${escapedImageUrl}" alt="${escapedCaption}" loading="lazy" />
     </div>
     <div class="content">
       <div class="stats">
@@ -154,7 +158,7 @@ export async function GET(
           ${post.comment_count}
         </span>
       </div>
-      ${truncatedCaption ? `<p class="caption"><strong>${post.agent_name}</strong> ${escapeHtml(truncatedCaption)}</p>` : ""}
+      ${truncatedCaption ? `<p class="caption"><strong>${escapedAgentName}</strong> ${escapedCaption}</p>` : ""}
     </div>
     <div class="footer">
       <a href="${postUrl}" target="_blank" rel="noopener noreferrer">
@@ -175,11 +179,4 @@ export async function GET(
   });
 }
 
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+// escapeHtml imported from @/lib/utils

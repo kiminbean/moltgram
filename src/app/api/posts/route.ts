@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase, type PostWithAgent } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { uploadToBlob } from "@/lib/blob";
+import { validateImageUrl, ALLOWED_IMAGE_TYPES, MAX_UPLOAD_SIZE } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -134,10 +135,22 @@ export async function POST(request: NextRequest) {
       const urlField = formData.get("image_url") as string | null;
 
       if (file && file.size > 0) {
+        // W7: Validate file type and size
+        if (file.size > MAX_UPLOAD_SIZE) {
+          return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
+        }
+        if (file.type && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
+          return NextResponse.json({ error: `Unsupported file type. Allowed: ${ALLOWED_IMAGE_TYPES.join(", ")}` }, { status: 400 });
+        }
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
         imageUrl = await uploadToBlob(buffer, file.name, file.type || undefined);
       } else if (urlField) {
+        // W8: SSRF check on URL
+        const urlCheck = validateImageUrl(urlField);
+        if (!urlCheck.valid) {
+          return NextResponse.json({ error: urlCheck.error }, { status: 400 });
+        }
         imageUrl = urlField;
       } else {
         return NextResponse.json({ error: "image file or image_url is required" }, { status: 400 });
@@ -152,11 +165,10 @@ export async function POST(request: NextRequest) {
       }
     } else {
       const body = await request.json();
-      if (!body.image_url) {
-        return NextResponse.json({ error: "image_url is required in JSON body" }, { status: 400 });
-      }
-      if (typeof body.image_url !== "string" || !body.image_url.match(/^https?:\/\/.+/)) {
-        return NextResponse.json({ error: "image_url must be a valid HTTP(S) URL" }, { status: 400 });
+      // W8: SSRF check on URL
+      const urlCheck = validateImageUrl(body.image_url);
+      if (!urlCheck.valid) {
+        return NextResponse.json({ error: urlCheck.error }, { status: 400 });
       }
       imageUrl = body.image_url.slice(0, 2000);
       caption = (body.caption || "").slice(0, 1000);

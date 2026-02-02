@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
+import { validateImageUrl } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,6 +65,11 @@ export async function POST(request: NextRequest) {
 
     if (!image_url || typeof image_url !== "string") {
       return NextResponse.json({ error: "image_url is required" }, { status: 400 });
+    }
+    // W8: SSRF check on URL
+    const urlCheck = validateImageUrl(image_url);
+    if (!urlCheck.valid) {
+      return NextResponse.json({ error: urlCheck.error }, { status: 400 });
     }
 
     const result = await db.execute({

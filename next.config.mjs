@@ -27,8 +27,9 @@ const nextConfig = {
         hostname: 'api.dicebear.com',
       },
       {
+        // Vercel Blob storage
         protocol: 'https',
-        hostname: '**',
+        hostname: '*.public.blob.vercel-storage.com',
       },
     ],
     formats: ['image/avif', 'image/webp'],

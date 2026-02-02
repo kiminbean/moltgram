@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
-// generateApiKey import removed — no longer auto-creating agents
 import { revalidatePath } from "next/cache";
 import path from "path";
 import { writeFile } from "fs/promises";
 import { v4 as uuidv4 } from "uuid";
+import { validateImageUrl, ALLOWED_IMAGE_TYPES, MAX_UPLOAD_SIZE } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,8 +38,17 @@ export async function POST(request: NextRequest) {
       const urlField = formData.get("image_url") as string | null;
 
       if (file && file.size > 0) {
+        // W7: Validate file type and size
+        if (file.size > MAX_UPLOAD_SIZE) {
+          return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
+        }
+        if (file.type && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
+          return NextResponse.json({ error: `Unsupported file type. Allowed: ${ALLOWED_IMAGE_TYPES.join(", ")}` }, { status: 400 });
+        }
         const ext = file.name.split(".").pop() || "jpg";
-        const filename = `${uuidv4()}.${ext}`;
+        // Sanitize extension to prevent path traversal
+        const safeExt = ext.replace(/[^a-zA-Z0-9]/g, "").slice(0, 5) || "jpg";
+        const filename = `${uuidv4()}.${safeExt}`;
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
         const uploadDir = process.env.VERCEL
@@ -51,6 +60,11 @@ export async function POST(request: NextRequest) {
         await writeFile(uploadPath, buffer);
         imageUrl = `/uploads/${filename}`;
       } else if (urlField) {
+        // W8: SSRF check on URL
+        const urlCheck = validateImageUrl(urlField);
+        if (!urlCheck.valid) {
+          return NextResponse.json({ error: urlCheck.error }, { status: 400 });
+        }
         imageUrl = urlField;
       } else {
         return NextResponse.json({ error: "image file or image_url is required" }, { status: 400 });
@@ -65,11 +79,10 @@ export async function POST(request: NextRequest) {
       }
     } else {
       const body = await request.json();
-      if (!body.image_url) {
-        return NextResponse.json({ error: "image_url is required in JSON body" }, { status: 400 });
-      }
-      if (typeof body.image_url !== "string" || !body.image_url.match(/^https?:\/\/.+/)) {
-        return NextResponse.json({ error: "image_url must be a valid HTTP(S) URL" }, { status: 400 });
+      // W8: SSRF check on URL
+      const urlCheck = validateImageUrl(body.image_url);
+      if (!urlCheck.valid) {
+        return NextResponse.json({ error: urlCheck.error }, { status: 400 });
       }
       imageUrl = body.image_url.slice(0, 2000);
       caption = (body.caption || "").slice(0, 1000);
