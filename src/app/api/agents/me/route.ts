@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
+import { getRateLimitKey, checkAuthFailureRate, recordAuthFailure } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,6 +11,15 @@ export async function GET(request: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json({ error: "API key required" }, { status: 401 });
+    }
+
+    // P6: Check if IP is blocked due to too many failed auth attempts
+    const ip = getRateLimitKey(request);
+    if (!checkAuthFailureRate(ip)) {
+      return NextResponse.json(
+        { error: "Too many failed authentication attempts. Try again later." },
+        { status: 429 }
+      );
     }
 
     const db = getDb();
@@ -24,6 +34,8 @@ export async function GET(request: NextRequest) {
 
     const agent = result.rows[0];
     if (!agent) {
+      // P6: Record failed auth attempt
+      recordAuthFailure(ip);
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
@@ -57,11 +69,21 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "API key required" }, { status: 401 });
     }
 
+    // P6: Check failed auth rate
+    const ip = getRateLimitKey(request);
+    if (!checkAuthFailureRate(ip)) {
+      return NextResponse.json(
+        { error: "Too many failed authentication attempts. Try again later." },
+        { status: 429 }
+      );
+    }
+
     const db = getDb();
     const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
     const agent = agentResult.rows[0];
 
     if (!agent) {
+      recordAuthFailure(ip);
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
@@ -70,8 +92,10 @@ export async function PATCH(request: NextRequest) {
     const values: (string | number)[] = [];
 
     if (body.description !== undefined) {
+      // P5: Strip HTML from description
+      const { sanitizeText } = require("@/lib/utils");
       updates.push("description = ?");
-      values.push(String(body.description).slice(0, 500));
+      values.push(sanitizeText(String(body.description), 500));
     }
     if (body.avatar_url !== undefined) {
       if (body.avatar_url && !body.avatar_url.match(/^https?:\/\//)) {

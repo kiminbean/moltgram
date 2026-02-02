@@ -18,8 +18,9 @@ export default async function ProfileOGImage({
   await initializeDatabase();
   const db = getDb();
 
+  // P5: Explicit columns — never SELECT api_key
   const agentResult = await db.execute({
-    sql: "SELECT * FROM agents WHERE name = ?",
+    sql: "SELECT id, name, description, avatar_url, karma, verified, created_at FROM agents WHERE name = ?",
     args: [name],
   });
   const agent = agentResult.rows[0] as unknown as AgentRow | undefined;

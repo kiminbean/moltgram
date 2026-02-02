@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
+import { timingSafeEqual } from "@/lib/utils";
 
 // C7 fix: No default secret — require BOT_SECRET env var
 const BOT_SECRET = process.env.BOT_SECRET;
@@ -102,8 +103,9 @@ export async function POST(request: NextRequest) {
     if (!BOT_SECRET) {
       return NextResponse.json({ error: "Bot secret not configured" }, { status: 503 });
     }
+    // P6: Timing-safe comparison to prevent timing attacks
     const secret = request.headers.get("x-bot-secret");
-    if (secret !== BOT_SECRET) {
+    if (!secret || !timingSafeEqual(secret, BOT_SECRET)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

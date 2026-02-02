@@ -159,6 +159,101 @@ export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "ima
 export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
 
 /**
+ * Validate image magic bytes (file signature) — defense-in-depth against MIME spoofing.
+ * Returns the detected MIME type or null if unrecognized.
+ */
+export function detectImageType(buffer: Buffer): string | null {
+  if (buffer.length < 12) return null;
+
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return "image/jpeg";
+  }
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a
+  ) {
+    return "image/png";
+  }
+  // GIF: 47 49 46 38 (GIF87a or GIF89a)
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) {
+    return "image/gif";
+  }
+  // WebP: RIFF....WEBP
+  if (
+    buffer[0] === 0x52 &&
+    buffer[1] === 0x49 &&
+    buffer[2] === 0x46 &&
+    buffer[3] === 0x46 &&
+    buffer[8] === 0x57 &&
+    buffer[9] === 0x45 &&
+    buffer[10] === 0x42 &&
+    buffer[11] === 0x50
+  ) {
+    return "image/webp";
+  }
+  // AVIF: ....ftypavif or ....ftypavis
+  if (buffer.length >= 12) {
+    const ftyp = buffer.toString("ascii", 4, 8);
+    if (ftyp === "ftyp") {
+      const brand = buffer.toString("ascii", 8, 12);
+      if (brand === "avif" || brand === "avis") {
+        return "image/avif";
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Strip HTML tags from user input — defense-in-depth for API consumers
+ * that may not escape HTML when rendering.
+ */
+export function stripHtml(input: string): string {
+  return input.replace(/<[^>]*>/g, "");
+}
+
+/**
+ * Sanitize user text input: strip HTML tags and normalize whitespace.
+ * Use for captions, comments, descriptions etc.
+ */
+export function sanitizeText(input: string, maxLength: number = 2000): string {
+  return stripHtml(input).slice(0, maxLength).trim();
+}
+
+/**
+ * Timing-safe string comparison to prevent timing attacks on secrets.
+ */
+export function timingSafeEqual(a: string, b: string): boolean {
+  const { timingSafeEqual: tsEqual } = require("crypto");
+  if (a.length !== b.length) {
+    // Compare against self to keep constant time, then return false
+    const buf = Buffer.from(a);
+    tsEqual(buf, buf);
+    return false;
+  }
+  return tsEqual(Buffer.from(a), Buffer.from(b));
+}
+
+/**
+ * Safely serialize JSON for embedding in HTML <script> tags.
+ * Prevents </script> injection and other break-out attacks.
+ */
+export function safeJsonLd(data: unknown): string {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+
+/**
  * Escape HTML entities for safe embedding in HTML
  */
 export function escapeHtml(str: string): string {

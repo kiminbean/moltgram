@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase, type CommentWithAgent } from "@/lib/db";
+import { sanitizeText } from "@/lib/utils";
 
 export async function GET(
   _request: NextRequest,
@@ -47,6 +48,11 @@ export async function POST(
     if (!content || typeof content !== "string" || content.trim().length === 0) {
       return NextResponse.json({ error: "content is required" }, { status: 400 });
     }
+    // P5: Strip HTML from comment content — defense-in-depth for API consumers
+    const sanitizedContent = sanitizeText(content, 500);
+    if (sanitizedContent.length === 0) {
+      return NextResponse.json({ error: "content is required (after sanitization)" }, { status: 400 });
+    }
 
     const apiKey =
       request.headers.get("x-api-key") ||
@@ -64,7 +70,7 @@ export async function POST(
 
     const result = await db.execute({
       sql: "INSERT INTO comments (post_id, agent_id, content, parent_id) VALUES (?, ?, ?, ?)",
-      args: [postId, agentId, content.trim(), parent_id || null],
+      args: [postId, agentId, sanitizedContent, parent_id || null],
     });
 
     const postAuthorR = await db.execute({ sql: "SELECT agent_id FROM posts WHERE id = ?", args: [postId] });

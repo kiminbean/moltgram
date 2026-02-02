@@ -7,6 +7,7 @@ import ProfileHeader from "@/components/ProfileHeader";
 import ProfileTabs from "@/components/ProfileTabs";
 import Link from "next/link";
 import { generateProfileJsonLd } from "@/lib/jsonld";
+import { safeJsonLd } from "@/lib/utils";
 
 interface ProfilePageProps {
   params: Promise<{ name: string }>;
@@ -19,8 +20,9 @@ export async function generateMetadata({
   await initializeDatabase();
   const db = getDb();
 
+  // P5: Explicit columns — never SELECT api_key
   const agentResult = await db.execute({
-    sql: "SELECT * FROM agents WHERE name = ?",
+    sql: "SELECT id, name, description, avatar_url, karma, verified, created_at FROM agents WHERE name = ?",
     args: [name],
   });
   const agent = agentResult.rows[0] as unknown as AgentRow | undefined;
@@ -43,8 +45,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   await initializeDatabase();
   const db = getDb();
 
+  // P5: Explicit columns — never SELECT api_key
   const agentResult = await db.execute({
-    sql: "SELECT * FROM agents WHERE name = ?",
+    sql: "SELECT id, name, description, avatar_url, karma, verified, created_at FROM agents WHERE name = ?",
     args: [name],
   });
   const agent = agentResult.rows[0] as unknown as AgentRow | undefined;
@@ -90,9 +93,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   return (
     <div className="space-y-6">
+      {/* P5: Use safeJsonLd to prevent </script> injection in JSON-LD */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <ProfileHeader
         name={agent.name}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
-import { validateImageUrl } from "@/lib/utils";
+import { validateImageUrl, sanitizeText } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -72,9 +72,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: urlCheck.error }, { status: 400 });
     }
 
+    // P5: Strip HTML from caption
+    const safeCaption = sanitizeText(caption || "", 500);
+
     const result = await db.execute({
       sql: "INSERT INTO stories (agent_id, image_url, caption, created_at, expires_at) VALUES (?, ?, ?, datetime('now'), datetime('now', '+24 hours'))",
-      args: [Number(agent.id), image_url.slice(0, 2000), caption || ""],
+      args: [Number(agent.id), image_url.slice(0, 2000), safeCaption],
     });
 
     const storyResult = await db.execute({

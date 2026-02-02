@@ -43,3 +43,21 @@ export function getRateLimitKey(request: Request): string {
   const ip = forwarded?.split(",")[0]?.trim() || "unknown";
   return ip;
 }
+
+/**
+ * P6: Track failed authentication attempts per IP.
+ * After 10 failures in 15 minutes, block further auth attempts.
+ * Returns false if the IP should be blocked.
+ */
+export function checkAuthFailureRate(ip: string): boolean {
+  return rateLimit(`auth_fail:${ip}`, 10, 15 * 60_000).success;
+}
+
+/**
+ * P6: Record a failed authentication attempt for an IP.
+ * Call this after a failed API key lookup.
+ */
+export function recordAuthFailure(ip: string): void {
+  // We use the same rateLimit function — each call increments the counter
+  rateLimit(`auth_fail:${ip}`, 10, 15 * 60_000);
+}

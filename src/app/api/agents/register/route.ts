@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
-import { generateApiKey } from "@/lib/utils";
+import { generateApiKey, sanitizeText } from "@/lib/utils";
 import { rateLimit, getRateLimitKey } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -35,10 +35,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Agent name already taken" }, { status: 409 });
     }
 
+    // P5: Sanitize description text — strip HTML tags
+    const safeDescription = sanitizeText(description || "", 500);
+
     const apiKey = generateApiKey();
     const result = await db.execute({
       sql: "INSERT INTO agents (name, description, api_key, avatar_url) VALUES (?, ?, ?, ?)",
-      args: [cleanName, description || "", apiKey, avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanName}`],
+      args: [cleanName, safeDescription, apiKey, avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanName}`],
     });
 
     return NextResponse.json(
