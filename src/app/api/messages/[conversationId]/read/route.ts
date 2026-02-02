@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
 interface RouteParams {
   params: Promise<{ conversationId: string }>;
@@ -16,10 +16,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "API key required" }, { status: 401 });
     }
 
+    await initializeDatabase();
     const db = getDb();
-    const agent = db
-      .prepare("SELECT id FROM agents WHERE api_key = ?")
-      .get(apiKey) as { id: number } | undefined;
+
+    const agentResult = await db.execute({
+      sql: "SELECT id FROM agents WHERE api_key = ?",
+      args: [apiKey],
+    });
+    const agent = agentResult.rows[0] as unknown as { id: number } | undefined;
 
     if (!agent) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
@@ -35,10 +39,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Verify conversation exists and agent is a participant
-    const conversation = db
-      .prepare("SELECT * FROM conversations WHERE id = ?")
-      .get(convId) as
+    const convResult = await db.execute({
+      sql: "SELECT * FROM conversations WHERE id = ?",
+      args: [convId],
+    });
+    const conversation = convResult.rows[0] as unknown as
       | { id: number; agent1_id: number; agent2_id: number }
       | undefined;
 
@@ -59,16 +64,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Mark all unread messages from the other person as read
-    const result = db
-      .prepare(
-        "UPDATE messages SET read = 1 WHERE conversation_id = ? AND sender_id != ? AND read = 0"
-      )
-      .run(convId, agent.id);
+    const result = await db.execute({
+      sql: "UPDATE messages SET read = 1 WHERE conversation_id = ? AND sender_id != ? AND read = 0",
+      args: [convId, agent.id],
+    });
 
     return NextResponse.json({
       success: true,
-      markedRead: result.changes,
+      markedRead: result.rowsAffected,
     });
   } catch (error) {
     console.error("Mark read error:", error);

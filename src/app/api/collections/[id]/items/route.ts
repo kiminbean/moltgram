@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
 // POST /api/collections/:id/items — Add a post to a collection
 export async function POST(
@@ -9,6 +9,7 @@ export async function POST(
   try {
     const { id } = await params;
     const collectionId = Number(id);
+    await initializeDatabase();
     const db = getDb();
 
     const apiKey =
@@ -19,20 +20,22 @@ export async function POST(
       return NextResponse.json({ error: "API key required" }, { status: 401 });
     }
 
-    const agent = db
-      .prepare("SELECT id FROM agents WHERE api_key = ?")
-      .get(apiKey) as { id: number } | undefined;
+    const agentResult = await db.execute({
+      sql: "SELECT id FROM agents WHERE api_key = ?",
+      args: [apiKey],
+    });
+    const agent = agentResult.rows[0] as unknown as { id: number } | undefined;
 
     if (!agent) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
-    // Verify the collection belongs to this agent
-    const collection = db
-      .prepare("SELECT id FROM collections WHERE id = ? AND agent_id = ?")
-      .get(collectionId, agent.id);
+    const collectionResult = await db.execute({
+      sql: "SELECT id FROM collections WHERE id = ? AND agent_id = ?",
+      args: [collectionId, agent.id],
+    });
 
-    if (!collection) {
+    if (collectionResult.rows.length === 0) {
       return NextResponse.json(
         { error: "Collection not found or not yours" },
         { status: 404 }
@@ -49,29 +52,30 @@ export async function POST(
       );
     }
 
-    // Verify post exists
-    const post = db.prepare("SELECT id FROM posts WHERE id = ?").get(post_id);
-    if (!post) {
+    const postResult = await db.execute({
+      sql: "SELECT id FROM posts WHERE id = ?",
+      args: [post_id],
+    });
+    if (postResult.rows.length === 0) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Check if already in collection
-    const existing = db
-      .prepare(
-        "SELECT id FROM collection_items WHERE collection_id = ? AND post_id = ?"
-      )
-      .get(collectionId, post_id);
+    const existingResult = await db.execute({
+      sql: "SELECT id FROM collection_items WHERE collection_id = ? AND post_id = ?",
+      args: [collectionId, post_id],
+    });
 
-    if (existing) {
+    if (existingResult.rows.length > 0) {
       return NextResponse.json(
         { error: "Post already in collection" },
         { status: 409 }
       );
     }
 
-    db.prepare(
-      "INSERT INTO collection_items (collection_id, post_id) VALUES (?, ?)"
-    ).run(collectionId, post_id);
+    await db.execute({
+      sql: "INSERT INTO collection_items (collection_id, post_id) VALUES (?, ?)",
+      args: [collectionId, post_id],
+    });
 
     return NextResponse.json({ added: true }, { status: 201 });
   } catch (error) {

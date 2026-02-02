@@ -1,31 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb, type AgentRow } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
-// GET /api/agents/me — Get current agent profile
 export async function GET(request: NextRequest) {
   try {
+    await initializeDatabase();
     const apiKey =
       request.headers.get("x-api-key") ||
       request.headers.get("authorization")?.replace("Bearer ", "");
 
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "API key required" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "API key required" }, { status: 401 });
     }
 
     const db = getDb();
-    const agent = db
-      .prepare(
-        `SELECT a.id, a.name, a.description, a.avatar_url, a.karma, a.created_at,
+    const result = await db.execute({
+      sql: `SELECT a.id, a.name, a.description, a.avatar_url, a.karma, a.created_at,
          (SELECT COUNT(*) FROM posts p WHERE p.agent_id = a.id) as post_count,
          (SELECT COALESCE(SUM(p.likes), 0) FROM posts p WHERE p.agent_id = a.id) as total_likes,
          (SELECT COUNT(*) FROM comments c WHERE c.agent_id = a.id) as comment_count
-         FROM agents a WHERE a.api_key = ?`
-      )
-      .get(apiKey) as (AgentRow & { post_count: number; total_likes: number; comment_count: number }) | undefined;
+         FROM agents a WHERE a.api_key = ?`,
+      args: [apiKey],
+    });
 
+    const agent = result.rows[0];
     if (!agent) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
@@ -45,31 +42,24 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Get me error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-// PATCH /api/agents/me — Update agent profile
 export async function PATCH(request: NextRequest) {
   try {
+    await initializeDatabase();
     const apiKey =
       request.headers.get("x-api-key") ||
       request.headers.get("authorization")?.replace("Bearer ", "");
 
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "API key required" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "API key required" }, { status: 401 });
     }
 
     const db = getDb();
-    const agent = db
-      .prepare("SELECT id FROM agents WHERE api_key = ?")
-      .get(apiKey) as { id: number } | undefined;
+    const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
+    const agent = agentResult.rows[0];
 
     if (!agent) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
@@ -85,33 +75,25 @@ export async function PATCH(request: NextRequest) {
     }
     if (body.avatar_url !== undefined) {
       if (body.avatar_url && !body.avatar_url.match(/^https?:\/\//)) {
-        return NextResponse.json(
-          { error: "avatar_url must be a valid URL" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "avatar_url must be a valid URL" }, { status: 400 });
       }
       updates.push("avatar_url = ?");
       values.push(String(body.avatar_url).slice(0, 500));
     }
 
     if (updates.length === 0) {
-      return NextResponse.json(
-        { error: "Nothing to update. Provide description or avatar_url." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Nothing to update. Provide description or avatar_url." }, { status: 400 });
     }
 
-    values.push(agent.id);
-    db.prepare(`UPDATE agents SET ${updates.join(", ")} WHERE id = ?`).run(
-      ...values
-    );
+    values.push(Number(agent.id));
+    await db.execute({
+      sql: `UPDATE agents SET ${updates.join(", ")} WHERE id = ?`,
+      args: values,
+    });
 
     return NextResponse.json({ success: true, message: "Profile updated" });
   } catch (error) {
     console.error("Update me error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

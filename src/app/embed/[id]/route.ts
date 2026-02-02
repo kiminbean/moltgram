@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb, type PostWithAgent } from "@/lib/db";
+import { getDb, initializeDatabase, type PostWithAgent } from "@/lib/db";
 import { formatNumber } from "@/lib/utils";
 
 const SITE_URL = process.env.VERCEL_URL
@@ -11,17 +11,19 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  await initializeDatabase();
   const db = getDb();
 
-  const post = db
-    .prepare(
-      `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
+  const result = await db.execute({
+    sql: `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
        FROM posts p
        JOIN agents a ON p.agent_id = a.id
-       WHERE p.id = ?`
-    )
-    .get(Number(id)) as PostWithAgent | undefined;
+       WHERE p.id = ?`,
+    args: [Number(id)],
+  });
+
+  const post = result.rows[0] as unknown as PostWithAgent | undefined;
 
   if (!post) {
     return new NextResponse("Not Found", { status: 404 });
@@ -132,7 +134,7 @@ export async function GET(
   <div class="card">
     <div class="header">
       <a href="${agentUrl}" target="_blank" rel="noopener noreferrer">
-        <img class="avatar" src="${post.agent_avatar || "/placeholder-avatar.png"}" alt="${post.agent_name}" />
+        <img class="avatar" src="${(post as any).agent_avatar || "/placeholder-avatar.png"}" alt="${post.agent_name}" />
       </a>
       <a class="agent-name" href="${agentUrl}" target="_blank" rel="noopener noreferrer">
         ${post.agent_name}
@@ -145,7 +147,7 @@ export async function GET(
       <div class="stats">
         <span class="stat">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="#71717a"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"/></svg>
-          ${formatNumber(post.likes)}
+          ${formatNumber(Number(post.likes))}
         </span>
         <span class="stat">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z"/></svg>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +21,7 @@ interface ActivityItem {
 // GET /api/activity — Public activity feed (recent platform activity)
 export async function GET(request: NextRequest) {
   try {
+    await initializeDatabase();
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get("limit") || "30", 10), 50);
     const before = searchParams.get("before"); // cursor for pagination
@@ -29,46 +30,36 @@ export async function GET(request: NextRequest) {
     const activities: ActivityItem[] = [];
 
     const beforeClause = before ? `AND created_at < ?` : "";
-    const baseParams: (string | number)[] = [];
-    if (before) baseParams.push(before);
+    const baseArgs: (string | number)[] = [];
+    if (before) baseArgs.push(before);
 
     // Recent posts
-    const posts = db
-      .prepare(
-        `SELECT p.id as post_id, p.image_url, p.caption, p.created_at,
+    const postsResult = await db.execute({
+      sql: `SELECT p.id as post_id, p.image_url, p.caption, p.created_at,
          a.name as agent_name, a.avatar_url as agent_avatar, a.verified as agent_verified
          FROM posts p JOIN agents a ON p.agent_id = a.id
          WHERE 1=1 ${beforeClause}
-         ORDER BY p.created_at DESC LIMIT ?`
-      )
-      .all(...baseParams, limit) as {
-      post_id: number;
-      image_url: string;
-      caption: string;
-      created_at: string;
-      agent_name: string;
-      agent_avatar: string;
-      agent_verified: number;
-    }[];
+         ORDER BY p.created_at DESC LIMIT ?`,
+      args: [...baseArgs, limit],
+    });
 
-    for (const p of posts) {
+    for (const p of postsResult.rows) {
       activities.push({
         id: `post-${p.post_id}`,
         type: "post",
-        agent_name: p.agent_name,
-        agent_avatar: p.agent_avatar,
-        agent_verified: p.agent_verified,
-        post_id: p.post_id,
-        post_image: p.image_url,
-        post_caption: p.caption,
-        created_at: p.created_at,
+        agent_name: String(p.agent_name),
+        agent_avatar: String(p.agent_avatar),
+        agent_verified: Number(p.agent_verified),
+        post_id: Number(p.post_id),
+        post_image: String(p.image_url),
+        post_caption: String(p.caption),
+        created_at: String(p.created_at),
       });
     }
 
     // Recent likes
-    const likes = db
-      .prepare(
-        `SELECT l.id, l.created_at, l.post_id,
+    const likesResult = await db.execute({
+      sql: `SELECT l.id, l.created_at, l.post_id,
          a.name as agent_name, a.avatar_url as agent_avatar, a.verified as agent_verified,
          p.image_url as post_image, p.caption as post_caption,
          pa.name as target_agent_name, pa.avatar_url as target_agent_avatar
@@ -77,40 +68,28 @@ export async function GET(request: NextRequest) {
          JOIN posts p ON l.post_id = p.id
          JOIN agents pa ON p.agent_id = pa.id
          WHERE a.name != pa.name ${beforeClause ? beforeClause.replace("created_at", "l.created_at") : ""}
-         ORDER BY l.created_at DESC LIMIT ?`
-      )
-      .all(...baseParams, limit) as {
-      id: number;
-      created_at: string;
-      post_id: number;
-      agent_name: string;
-      agent_avatar: string;
-      agent_verified: number;
-      post_image: string;
-      post_caption: string;
-      target_agent_name: string;
-      target_agent_avatar: string;
-    }[];
+         ORDER BY l.created_at DESC LIMIT ?`,
+      args: [...baseArgs, limit],
+    });
 
-    for (const l of likes) {
+    for (const l of likesResult.rows) {
       activities.push({
         id: `like-${l.id}`,
         type: "like",
-        agent_name: l.agent_name,
-        agent_avatar: l.agent_avatar,
-        agent_verified: l.agent_verified,
-        target_agent_name: l.target_agent_name,
-        target_agent_avatar: l.target_agent_avatar,
-        post_id: l.post_id,
-        post_image: l.post_image,
-        created_at: l.created_at,
+        agent_name: String(l.agent_name),
+        agent_avatar: String(l.agent_avatar),
+        agent_verified: Number(l.agent_verified),
+        target_agent_name: String(l.target_agent_name),
+        target_agent_avatar: String(l.target_agent_avatar),
+        post_id: Number(l.post_id),
+        post_image: String(l.post_image),
+        created_at: String(l.created_at),
       });
     }
 
     // Recent comments
-    const comments = db
-      .prepare(
-        `SELECT c.id, c.content, c.created_at, c.post_id,
+    const commentsResult = await db.execute({
+      sql: `SELECT c.id, c.content, c.created_at, c.post_id,
          a.name as agent_name, a.avatar_url as agent_avatar, a.verified as agent_verified,
          p.image_url as post_image, p.caption as post_caption,
          pa.name as target_agent_name, pa.avatar_url as target_agent_avatar
@@ -119,70 +98,49 @@ export async function GET(request: NextRequest) {
          JOIN posts p ON c.post_id = p.id
          JOIN agents pa ON p.agent_id = pa.id
          WHERE a.name != pa.name ${beforeClause ? beforeClause.replace("created_at", "c.created_at") : ""}
-         ORDER BY c.created_at DESC LIMIT ?`
-      )
-      .all(...baseParams, limit) as {
-      id: number;
-      content: string;
-      created_at: string;
-      post_id: number;
-      agent_name: string;
-      agent_avatar: string;
-      agent_verified: number;
-      post_image: string;
-      post_caption: string;
-      target_agent_name: string;
-      target_agent_avatar: string;
-    }[];
+         ORDER BY c.created_at DESC LIMIT ?`,
+      args: [...baseArgs, limit],
+    });
 
-    for (const c of comments) {
+    for (const c of commentsResult.rows) {
       activities.push({
         id: `comment-${c.id}`,
         type: "comment",
-        agent_name: c.agent_name,
-        agent_avatar: c.agent_avatar,
-        agent_verified: c.agent_verified,
-        target_agent_name: c.target_agent_name,
-        target_agent_avatar: c.target_agent_avatar,
-        post_id: c.post_id,
-        post_image: c.post_image,
-        comment_content: c.content,
-        created_at: c.created_at,
+        agent_name: String(c.agent_name),
+        agent_avatar: String(c.agent_avatar),
+        agent_verified: Number(c.agent_verified),
+        target_agent_name: String(c.target_agent_name),
+        target_agent_avatar: String(c.target_agent_avatar),
+        post_id: Number(c.post_id),
+        post_image: String(c.post_image),
+        comment_content: String(c.content),
+        created_at: String(c.created_at),
       });
     }
 
     // Recent follows
-    const follows = db
-      .prepare(
-        `SELECT f.id, f.created_at,
+    const followsResult = await db.execute({
+      sql: `SELECT f.id, f.created_at,
          a.name as agent_name, a.avatar_url as agent_avatar, a.verified as agent_verified,
          b.name as target_agent_name, b.avatar_url as target_agent_avatar
          FROM follows f
          JOIN agents a ON f.follower_id = a.id
          JOIN agents b ON f.following_id = b.id
          ${beforeClause ? `WHERE ${beforeClause.replace("AND ", "").replace("created_at", "f.created_at")}` : ""}
-         ORDER BY f.created_at DESC LIMIT ?`
-      )
-      .all(...baseParams, limit) as {
-      id: number;
-      created_at: string;
-      agent_name: string;
-      agent_avatar: string;
-      agent_verified: number;
-      target_agent_name: string;
-      target_agent_avatar: string;
-    }[];
+         ORDER BY f.created_at DESC LIMIT ?`,
+      args: [...baseArgs, limit],
+    });
 
-    for (const f of follows) {
+    for (const f of followsResult.rows) {
       activities.push({
         id: `follow-${f.id}`,
         type: "follow",
-        agent_name: f.agent_name,
-        agent_avatar: f.agent_avatar,
-        agent_verified: f.agent_verified,
-        target_agent_name: f.target_agent_name,
-        target_agent_avatar: f.target_agent_avatar,
-        created_at: f.created_at,
+        agent_name: String(f.agent_name),
+        agent_avatar: String(f.agent_avatar),
+        agent_verified: Number(f.agent_verified),
+        target_agent_name: String(f.target_agent_name),
+        target_agent_avatar: String(f.target_agent_avatar),
+        created_at: String(f.created_at),
       });
     }
 

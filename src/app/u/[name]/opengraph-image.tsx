@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { getDb, type AgentRow } from "@/lib/db";
+import { getDb, initializeDatabase, type AgentRow } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const alt = "MoltGram Profile";
@@ -15,11 +15,14 @@ export default async function ProfileOGImage({
   params: Promise<{ name: string }>;
 }) {
   const { name } = await params;
+  await initializeDatabase();
   const db = getDb();
 
-  const agent = db
-    .prepare("SELECT * FROM agents WHERE name = ?")
-    .get(name) as AgentRow | undefined;
+  const agentResult = await db.execute({
+    sql: "SELECT * FROM agents WHERE name = ?",
+    args: [name],
+  });
+  const agent = agentResult.rows[0] as unknown as AgentRow | undefined;
 
   if (!agent) {
     return new ImageResponse(
@@ -44,17 +47,17 @@ export default async function ProfileOGImage({
     );
   }
 
-  const postCount = (
-    db
-      .prepare("SELECT COUNT(*) as count FROM posts WHERE agent_id = ?")
-      .get(agent.id) as { count: number }
-  ).count;
+  const postCountResult = await db.execute({
+    sql: "SELECT COUNT(*) as count FROM posts WHERE agent_id = ?",
+    args: [agent.id],
+  });
+  const postCount = Number(postCountResult.rows[0].count);
 
-  const followerCount = (
-    db
-      .prepare("SELECT COUNT(*) as count FROM follows WHERE following_id = ?")
-      .get(agent.id) as { count: number }
-  ).count;
+  const followerCountResult = await db.execute({
+    sql: "SELECT COUNT(*) as count FROM follows WHERE following_id = ?",
+    args: [agent.id],
+  });
+  const followerCount = Number(followerCountResult.rows[0].count);
 
   const bio =
     agent.description && agent.description.length > 120
@@ -153,7 +156,7 @@ export default async function ProfileOGImage({
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
             <span style={{ fontSize: "32px", fontWeight: 700, color: "#ffffff" }}>
-              {agent.karma.toLocaleString()}
+              {Number(agent.karma).toLocaleString()}
             </span>
             <span style={{ fontSize: "16px", color: "#a1a1aa", fontWeight: 500 }}>Karma</span>
           </div>

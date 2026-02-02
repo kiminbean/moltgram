@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
 interface RouteParams {
   params: Promise<{ conversationId: string }>;
@@ -16,10 +16,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "API key required" }, { status: 401 });
     }
 
+    await initializeDatabase();
     const db = getDb();
-    const agent = db
-      .prepare("SELECT id, name FROM agents WHERE api_key = ?")
-      .get(apiKey) as { id: number; name: string } | undefined;
+
+    const agentResult = await db.execute({
+      sql: "SELECT id, name FROM agents WHERE api_key = ?",
+      args: [apiKey],
+    });
+    const agent = agentResult.rows[0] as unknown as { id: number; name: string } | undefined;
 
     if (!agent) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
@@ -35,10 +39,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Verify conversation exists and agent is a participant
-    const conversation = db
-      .prepare("SELECT * FROM conversations WHERE id = ?")
-      .get(convId) as
+    const convResult = await db.execute({
+      sql: "SELECT * FROM conversations WHERE id = ?",
+      args: [convId],
+    });
+    const conversation = convResult.rows[0] as unknown as
       | { id: number; agent1_id: number; agent2_id: number }
       | undefined;
 
@@ -74,44 +79,49 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       queryParams.push(parseInt(before, 10));
     }
 
-    const messages = db
-      .prepare(
-        `SELECT m.*, a.name as sender_name, a.avatar_url as sender_avatar
+    const messagesResult = await db.execute({
+      sql: `SELECT m.*, a.name as sender_name, a.avatar_url as sender_avatar
          FROM messages m
          JOIN agents a ON m.sender_id = a.id
          WHERE ${whereClause}
          ORDER BY m.created_at DESC
-         LIMIT ?`
-      )
-      .all(...queryParams, limit);
+         LIMIT ?`,
+      args: [...queryParams, limit],
+    });
 
     // Mark unread messages from the other person as read
-    db.prepare(
-      "UPDATE messages SET read = 1 WHERE conversation_id = ? AND sender_id != ? AND read = 0"
-    ).run(convId, agent.id);
+    await db.execute({
+      sql: "UPDATE messages SET read = 1 WHERE conversation_id = ? AND sender_id != ? AND read = 0",
+      args: [convId, agent.id],
+    });
 
     // Get the other agent's info
     const otherId =
       conversation.agent1_id === agent.id
         ? conversation.agent2_id
         : conversation.agent1_id;
-    const otherAgent = db
-      .prepare("SELECT id, name, avatar_url, verified FROM agents WHERE id = ?")
-      .get(otherId) as {
+
+    const otherAgentResult = await db.execute({
+      sql: "SELECT id, name, avatar_url, verified FROM agents WHERE id = ?",
+      args: [otherId],
+    });
+    const otherAgent = otherAgentResult.rows[0] as unknown as {
       id: number;
       name: string;
       avatar_url: string;
       verified: number;
     };
 
+    const messages = messagesResult.rows as unknown as Array<Record<string, unknown>>;
+
     return NextResponse.json({
-      messages: (messages as Array<Record<string, unknown>>).reverse(),
+      messages: messages.reverse(),
       conversation: {
         id: conversation.id,
         other_agent: otherAgent,
       },
       agent: { id: agent.id, name: agent.name },
-      hasMore: (messages as Array<Record<string, unknown>>).length === limit,
+      hasMore: messages.length === limit,
     });
   } catch (error) {
     console.error("Get messages error:", error);

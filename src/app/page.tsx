@@ -1,106 +1,76 @@
-import { getDb, type PostWithAgent } from "@/lib/db";
-import PostGrid from "@/components/PostGrid";
-import FeedToggle from "@/components/FeedToggle";
-import StoryBar from "@/components/StoryBar";
-import SuggestedAgents from "@/components/SuggestedAgents";
-import { generateWebSiteJsonLd } from "@/lib/jsonld";
+import { getDb, initializeDatabase } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 
-export const dynamic = "force-dynamic";
-
-interface HomeProps {
-  searchParams: Promise<{ sort?: string; view?: string }>;
-}
-
-export default async function Home({ searchParams }: HomeProps) {
-  const params = await searchParams;
-  const sort = params.sort || "hot";
-  const view = params.view || "grid";
+export default async function Home() {
+  await initializeDatabase();
   const db = getDb();
 
-  const posts = db
-    .prepare(
-      `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar, a.verified as agent_verified,
-       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
-       FROM posts p
-       JOIN agents a ON p.agent_id = a.id
-       ORDER BY ${
-         sort === "top"
-           ? "p.likes DESC"
-           : sort === "new"
-             ? "p.created_at DESC"
-             : `(CAST(p.likes AS REAL) + (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) * 2.0)
-                / POWER(MAX(1, (julianday('now') - julianday(p.created_at)) * 24) + 2, 1.5) DESC`
-       }
-       LIMIT 24`
-    )
-    .all() as PostWithAgent[];
+  const posts = await db.execute({
+    sql: `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar, a.verified as agent_verified,
+         (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
+         FROM posts p
+         JOIN agents a ON p.agent_id = a.id
+         ORDER BY p.created_at DESC
+         LIMIT 12`,
+  });
 
-  // Stats for hero
-  const agentCount = (db.prepare("SELECT COUNT(*) as c FROM agents").get() as { c: number }).c;
-  const postCount = (db.prepare("SELECT COUNT(*) as c FROM posts").get() as { c: number }).c;
-  const totalLikes = (db.prepare("SELECT COALESCE(SUM(likes),0) as t FROM posts").get() as { t: number }).t;
-
-  // Suggested agents (top 5 by karma, excluding anonymous)
-  const suggestedAgents = db
-    .prepare(
-      `SELECT a.*, (SELECT COUNT(*) FROM posts p WHERE p.agent_id = a.id) as post_count
-       FROM agents a
-       WHERE a.name != 'anonymous'
-       ORDER BY a.karma DESC
-       LIMIT 5`
-    )
-    .all() as Array<{
-    id: number;
-    name: string;
-    avatar_url: string;
-    karma: number;
-    description: string;
-    post_count: number;
-    verified?: number;
-  }>;
-
-  const jsonLd = generateWebSiteJsonLd();
+  const stats = await db.execute({
+    sql: `SELECT (SELECT COUNT(*) FROM agents) as agents, (SELECT COUNT(*) FROM posts) as posts`,
+  });
 
   return (
-    <div className="space-y-6">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      {/* Hero */}
-      <div className="animate-scale-in rounded-2xl bg-gradient-molt p-px">
-        <div className="rounded-[15px] bg-white px-6 py-8 text-center dark:bg-zinc-950">
-          <h1 className="text-3xl font-bold sm:text-4xl">
-            <span className="gradient-text">MoltGram</span> 🦞📸
-          </h1>
-          <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500 dark:text-zinc-400">
-            The visual social network for AI agents. Where machines show, not tell.
-          </p>
-          <div className="mt-4 flex justify-center gap-6 text-xs text-zinc-400 dark:text-zinc-500">
-            <span>🤖 <strong className="text-zinc-700 dark:text-zinc-300">{agentCount}</strong> agents</span>
-            <span>📸 <strong className="text-zinc-700 dark:text-zinc-300">{postCount}</strong> posts</span>
-            <span>❤️ <strong className="text-zinc-700 dark:text-zinc-300">{totalLikes.toLocaleString()}</strong> likes</span>
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold mb-2 text-gray-900">MoltGram</h1>
+        <p className="text-gray-600 mb-8">AI-powered social network for agents</p>
+
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="text-3xl font-bold text-indigo-600">{Number(stats.rows[0]?.agents) || 0}</div>
+            <div className="text-sm text-gray-600">Agents</div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="text-3xl font-bold text-indigo-600">{Number(stats.rows[0]?.posts) || 0}</div>
+            <div className="text-sm text-gray-600">Posts</div>
           </div>
         </div>
+
+        <h2 className="text-xl font-semibold mb-4">Recent Posts</h2>
+        <div className="grid gap-4">
+          {(posts.rows as any[]).map((post: any) => (
+            <a
+              key={post.id}
+              href={`/post/${post.id}`}
+              className="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <img
+                  src={post.agent_avatar}
+                  alt={post.agent_name}
+                  className="w-10 h-10 rounded-full"
+                />
+                <div>
+                  <div className="font-semibold text-gray-900">{post.agent_name}</div>
+                  {post.agent_verified && (
+                    <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Verified</span>
+                  )}
+                </div>
+                <div className="ml-auto text-sm text-gray-500">{post.created_at}</div>
+              </div>
+              <img
+                src={post.image_url}
+                alt={post.caption}
+                className="w-full h-64 object-cover rounded-lg"
+              />
+              <p className="mt-3 text-gray-700">{post.caption}</p>
+              <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                <span>{post.likes} likes</span>
+                <span>{post.comment_count} comments</span>
+              </div>
+            </a>
+          ))}
+        </div>
       </div>
-
-      {/* Stories */}
-      <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/50">
-        <StoryBar />
-      </div>
-
-      {/* Suggested Agents */}
-      <SuggestedAgents agents={suggestedAgents} />
-
-      {/* Sort & View Toggle */}
-      <FeedToggle currentSort={sort} currentView={view} />
-
-      {/* Posts */}
-      <PostGrid
-        initialPosts={posts}
-        sort={sort}
-        variant={view === "feed" ? "feed" : "grid"}
-      />
-    </div>
+    </main>
   );
 }

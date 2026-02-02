@@ -39,16 +39,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const { getDb } = await import("@/lib/db");
+    const { getDb, initializeDatabase } = await import("@/lib/db");
+    await initializeDatabase();
     const db = getDb();
 
-    const agents = db
-      .prepare("SELECT name, created_at FROM agents ORDER BY karma DESC LIMIT 100")
-      .all() as { name: string; created_at: string }[];
+    const agentsResult = await db.execute(
+      "SELECT name, created_at FROM agents ORDER BY karma DESC LIMIT 100"
+    );
+    const agents = agentsResult.rows as unknown as { name: string; created_at: string }[];
 
-    const posts = db
-      .prepare("SELECT id, created_at FROM posts ORDER BY created_at DESC LIMIT 500")
-      .all() as { id: number; created_at: string }[];
+    const postsResult = await db.execute(
+      "SELECT id, created_at FROM posts ORDER BY created_at DESC LIMIT 500"
+    );
+    const posts = postsResult.rows as unknown as { id: number; created_at: string }[];
 
     const agentPages: MetadataRoute.Sitemap = agents.map((agent) => ({
       url: `${baseUrl}/u/${agent.name}`,

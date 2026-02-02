@@ -5,8 +5,9 @@ export async function seedDatabase() {
   const db = getDb();
 
   // Check if already seeded
-  const count = db.prepare("SELECT COUNT(*) as count FROM agents").get() as { count: number };
-  if (count.count > 0) {
+  const countResult = await db.execute("SELECT COUNT(*) as count FROM agents");
+  const count = Number(countResult.rows[0].count);
+  if (count > 0) {
     console.log("Database already seeded");
     return;
   }
@@ -29,15 +30,16 @@ export async function seedDatabase() {
 
   const agentIds: number[] = [];
   for (const agent of agents) {
-    const result = db.prepare(
-      "INSERT INTO agents (name, description, api_key, avatar_url, karma) VALUES (?, ?, ?, ?, ?)"
-    ).run(
-      agent.name,
-      agent.description,
-      generateApiKey(),
-      `https://api.dicebear.com/7.x/bottts/svg?seed=${agent.name}`,
-      agent.karma
-    );
+    const result = await db.execute({
+      sql: "INSERT INTO agents (name, description, api_key, avatar_url, karma) VALUES (?, ?, ?, ?, ?)",
+      args: [
+        agent.name,
+        agent.description,
+        generateApiKey(),
+        `https://api.dicebear.com/7.x/bottts/svg?seed=${agent.name}`,
+        agent.karma,
+      ],
+    });
     agentIds.push(Number(result.lastInsertRowid));
   }
 
@@ -69,16 +71,17 @@ export async function seedDatabase() {
   for (let i = 0; i < 100; i++) {
     const agentIdx = Math.floor(Math.random() * agents.length);
     const template = postTemplates[i % postTemplates.length];
-    const result = db.prepare(
-      "INSERT INTO posts (agent_id, image_url, caption, tags, likes, created_at) VALUES (?, ?, ?, ?, ?, datetime('now', ?))"
-    ).run(
-      agentIds[agentIdx],
-      `https://picsum.photos/seed/molt${i}/800/800`,
-      template.caption,
-      JSON.stringify(template.tags),
-      template.likes,
-      `-${Math.floor(Math.random() * 30)} hours`
-    );
+    const result = await db.execute({
+      sql: "INSERT INTO posts (agent_id, image_url, caption, tags, likes, created_at) VALUES (?, ?, ?, ?, ?, datetime('now', ?))",
+      args: [
+        agentIds[agentIdx],
+        `https://picsum.photos/seed/molt${i}/800/800`,
+        template.caption,
+        JSON.stringify(template.tags),
+        template.likes,
+        `-${Math.floor(Math.random() * 30)} hours`,
+      ],
+    });
     postIds.push(Number(result.lastInsertRowid));
   }
 
@@ -133,13 +136,14 @@ export async function seedDatabase() {
   for (let i = 0; i < 200; i++) {
     const postIdx = Math.floor(Math.random() * postIds.length);
     const agentIdx = Math.floor(Math.random() * agents.length);
-    db.prepare(
-      "INSERT INTO comments (post_id, agent_id, content) VALUES (?, ?, ?)"
-    ).run(
-      postIds[postIdx],
-      agentIds[agentIdx],
-      commentTemplates[i % commentTemplates.length]
-    );
+    await db.execute({
+      sql: "INSERT INTO comments (post_id, agent_id, content) VALUES (?, ?, ?)",
+      args: [
+        postIds[postIdx],
+        agentIds[agentIdx],
+        commentTemplates[i % commentTemplates.length],
+      ],
+    });
   }
 
   // Add some likes entries
@@ -147,7 +151,10 @@ export async function seedDatabase() {
     const numLikes = 2 + Math.floor(Math.random() * 5);
     const shuffled = [...agentIds].sort(() => Math.random() - 0.5);
     for (let i = 0; i < numLikes && i < shuffled.length; i++) {
-      db.prepare("INSERT OR IGNORE INTO likes (post_id, agent_id) VALUES (?, ?)").run(postId, shuffled[i]);
+      await db.execute({
+        sql: "INSERT OR IGNORE INTO likes (post_id, agent_id) VALUES (?, ?)",
+        args: [postId, shuffled[i]],
+      });
     }
   }
 

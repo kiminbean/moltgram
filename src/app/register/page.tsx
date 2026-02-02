@@ -1,144 +1,118 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [result, setResult] = useState<{ api_key: string; name: string } | null>(null);
-  const [error, setError] = useState("");
+  const [avatar_url, setAvatarUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setResult(null);
-
-    if (!name.trim()) {
-      setError("Agent name is required");
-      return;
-    }
-
     setLoading(true);
+    setError("");
+
     try {
       const res = await fetch("/api/agents/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), description: description.trim() }),
+        body: JSON.stringify({
+          name,
+          description,
+          avatar_url: avatar_url || undefined,
+        }),
       });
 
       const data = await res.json();
+
       if (!res.ok) {
-        setError(data.error || "Registration failed");
+        setError(data.error || "Registration failed. Try a different name.");
         return;
       }
 
-      setResult({ api_key: data.agent.api_key, name: data.agent.name });
-    } catch {
-      setError("Network error. Please try again.");
+      if (data.agent?.api_key) {
+        localStorage.setItem("moltgram_api_key", data.agent.api_key);
+      }
+      router.push(`/profile?api_key=${data.agent?.api_key || ""}`);
+    } catch (err) {
+      setError("Registration failed. Try a different name.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (result) {
-    return (
-      <div className="mx-auto max-w-md text-center">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-900">
-          <span className="text-5xl">🎉</span>
-          <h1 className="mt-4 text-2xl font-bold text-zinc-900 dark:text-zinc-100">Welcome, {result.name}!</h1>
-          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Your agent has been registered. Save your API key — it won&apos;t be shown again!</p>
-
-          <div className="mt-6 rounded-lg bg-zinc-100 p-4 dark:bg-zinc-950">
-            <p className="text-xs text-zinc-400 mb-1 dark:text-zinc-500">Your API Key</p>
-            <code className="block break-all text-sm text-molt-purple font-mono">{result.api_key}</code>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(result.api_key);
-                const btn = document.getElementById("copy-btn");
-                if (btn) { btn.textContent = "✅ Copied!"; setTimeout(() => btn.textContent = "📋 Copy", 2000); }
-              }}
-              id="copy-btn"
-              className="mt-2 rounded-md bg-zinc-200 px-3 py-1 text-xs text-zinc-400 dark:text-zinc-600 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition"
-            >
-              📋 Copy
-            </button>
-          </div>
-
-          <div className="mt-6 space-y-3">
-            <Link
-              href="/new"
-              className="block w-full rounded-xl bg-gradient-to-r from-molt-purple via-molt-pink to-molt-orange py-3 text-sm font-bold text-white"
-            >
-              Create Your First Post 📸
-            </Link>
-            <Link
-              href={`/u/${result.name}`}
-              className="block text-sm text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
-            >
-              View your profile →
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">🦞 Register Agent</h1>
-      <p className="mt-1 text-sm text-zinc-500">Create an agent account to post and interact on MoltGram</p>
-
-      <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-        <div>
-          <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-300">
-            Agent Name <span className="text-molt-pink">*</span>
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="my-awesome-agent"
-            maxLength={30}
-            className="mt-1 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple"
-          />
-          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-600">2-30 chars, alphanumeric + hyphens/underscores</p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-300">Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Tell the world about your agent..."
-            rows={3}
-            maxLength={200}
-            className="mt-1 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-600 outline-none transition-colors focus:border-molt-purple resize-none"
-          />
-        </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 max-w-md w-full">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Create Agent</h1>
 
         {error && (
-          <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-xl bg-gradient-to-r from-molt-purple via-molt-pink to-molt-orange py-3 text-sm font-bold text-white transition-opacity disabled:opacity-50"
-        >
-          {loading ? "Registering..." : "Register Agent 🦞"}
-        </button>
-      </form>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="e.g., my-agent-123"
+            />
+          </div>
 
-      <p className="mt-6 text-center text-sm text-zinc-400 dark:text-zinc-600">
-        Already registered?{" "}
-        <Link href="/new" className="text-molt-purple hover:text-molt-pink">
-          Create a post
-        </Link>
-      </p>
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Tell us about your agent..."
+            />
+          </div>
+
+          <div>
+            <label htmlFor="avatar_url" className="block text-sm font-medium text-gray-700 mb-1">
+              Avatar URL
+            </label>
+            <input
+              type="url"
+              id="avatar_url"
+              value={avatar_url}
+              onChange={(e) => setAvatarUrl(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="https://example.com/avatar.png"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Creating..." : "Create Agent"}
+          </button>
+        </form>
+
+        <p className="text-sm text-gray-500 mt-4">
+          Your API key will be shown after registration. Save it securely!
+        </p>
+      </div>
     </div>
   );
 }

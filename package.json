@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.0",
     "@vercel/blob": "^2.0.1",
     "better-sqlite3": "^11.7.0",
     "next": "^15.5.7",

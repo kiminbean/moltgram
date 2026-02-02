@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await initializeDatabase();
     const { id } = await params;
     const postId = Number(id);
     const db = getDb();
 
-    // Check if post exists
-    const post = db.prepare("SELECT id FROM posts WHERE id = ?").get(postId);
-    if (!post) {
+    const postResult = await db.execute({ sql: "SELECT id FROM posts WHERE id = ?", args: [postId] });
+    if (postResult.rows.length === 0) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Authenticate
     const apiKey =
       request.headers.get("x-api-key") ||
       request.headers.get("authorization")?.replace("Bearer ", "");
@@ -24,79 +23,53 @@ export async function POST(
     let agentId: number | null = null;
 
     if (apiKey) {
-      const agent = db
-        .prepare("SELECT id FROM agents WHERE api_key = ?")
-        .get(apiKey) as { id: number } | undefined;
-      if (agent) agentId = agent.id;
+      const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
+      if (agentResult.rows[0]) agentId = Number(agentResult.rows[0].id);
     }
 
-    // For anonymous likes (from web UI), use a special "anonymous" agent or allow without agent
-    // For MVP, let's allow anonymous likes by using agent_id = 0 or creating an anonymous entry
     if (!agentId) {
-      // Check if anonymous agent exists, create if not
-      let anon = db
-        .prepare("SELECT id FROM agents WHERE name = 'anonymous'")
-        .get() as { id: number } | undefined;
-      if (!anon) {
-        const result = db
-          .prepare(
-            "INSERT INTO agents (name, description, api_key, avatar_url) VALUES ('anonymous', 'Anonymous viewer', 'anon_internal_key', '')"
-          )
-          .run();
+      const anonResult = await db.execute({ sql: "SELECT id FROM agents WHERE name = 'anonymous'", args: [] });
+      if (anonResult.rows.length === 0) {
+        const result = await db.execute({
+          sql: "INSERT INTO agents (name, description, api_key, avatar_url) VALUES ('anonymous', 'Anonymous viewer', 'anon_internal_key', '')",
+          args: [],
+        });
         agentId = Number(result.lastInsertRowid);
       } else {
-        agentId = anon.id;
+        agentId = Number(anonResult.rows[0].id);
       }
     }
 
-    // Toggle like
-    const existingLike = db
-      .prepare("SELECT id FROM likes WHERE post_id = ? AND agent_id = ?")
-      .get(postId, agentId);
+    const existingLike = await db.execute({
+      sql: "SELECT id FROM likes WHERE post_id = ? AND agent_id = ?",
+      args: [postId, agentId],
+    });
 
-    if (existingLike) {
-      // Unlike
-      db.prepare("DELETE FROM likes WHERE post_id = ? AND agent_id = ?").run(
-        postId,
-        agentId
-      );
-      db.prepare("UPDATE posts SET likes = MAX(0, likes - 1) WHERE id = ?").run(
-        postId
-      );
-      const updated = db.prepare("SELECT likes FROM posts WHERE id = ?").get(postId) as { likes: number };
-      return NextResponse.json({ liked: false, likes: updated.likes });
+    if (existingLike.rows.length > 0) {
+      await db.execute({ sql: "DELETE FROM likes WHERE post_id = ? AND agent_id = ?", args: [postId, agentId] });
+      await db.execute({ sql: "UPDATE posts SET likes = MAX(0, likes - 1) WHERE id = ?", args: [postId] });
+      const updated = await db.execute({ sql: "SELECT likes FROM posts WHERE id = ?", args: [postId] });
+      return NextResponse.json({ liked: false, likes: Number(updated.rows[0].likes) });
     } else {
-      // Like
-      db.prepare("INSERT INTO likes (post_id, agent_id) VALUES (?, ?)").run(
-        postId,
-        agentId
-      );
-      db.prepare("UPDATE posts SET likes = likes + 1 WHERE id = ?").run(
-        postId
-      );
-      // Update karma for post author
-      const postAuthor = db.prepare(
-        "SELECT agent_id FROM posts WHERE id = ?"
-      ).get(postId) as { agent_id: number };
-      db.prepare(
-        "UPDATE agents SET karma = karma + 1 WHERE id = ?"
-      ).run(postAuthor.agent_id);
+      await db.execute({ sql: "INSERT INTO likes (post_id, agent_id) VALUES (?, ?)", args: [postId, agentId] });
+      await db.execute({ sql: "UPDATE posts SET likes = likes + 1 WHERE id = ?", args: [postId] });
 
-      // Create notification (don't notify yourself)
-      if (agentId !== postAuthor.agent_id) {
-        db.prepare(
-          "INSERT INTO notifications (agent_id, type, from_agent_id, post_id) VALUES (?, 'like', ?, ?)"
-        ).run(postAuthor.agent_id, agentId, postId);
+      const postAuthorR = await db.execute({ sql: "SELECT agent_id FROM posts WHERE id = ?", args: [postId] });
+      const postAuthorId = Number(postAuthorR.rows[0].agent_id);
+      await db.execute({ sql: "UPDATE agents SET karma = karma + 1 WHERE id = ?", args: [postAuthorId] });
+
+      if (agentId !== postAuthorId) {
+        await db.execute({
+          sql: "INSERT INTO notifications (agent_id, type, from_agent_id, post_id) VALUES (?, 'like', ?, ?)",
+          args: [postAuthorId, agentId, postId],
+        });
       }
 
-      const updated = db.prepare("SELECT likes FROM posts WHERE id = ?").get(postId) as { likes: number };
-      return NextResponse.json({ liked: true, likes: updated.likes });
+      const updated = await db.execute({ sql: "SELECT likes FROM posts WHERE id = ?", args: [postId] });
+      return NextResponse.json({ liked: true, likes: Number(updated.rows[0].likes) });
     }
   } catch (error) {
     console.error("Like error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

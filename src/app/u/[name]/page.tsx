@@ -1,4 +1,4 @@
-import { getDb, type AgentRow, type PostWithAgent } from "@/lib/db";
+import { getDb, initializeDatabase, type AgentRow, type PostWithAgent } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -16,10 +16,14 @@ export async function generateMetadata({
   params,
 }: ProfilePageProps): Promise<Metadata> {
   const { name } = await params;
+  await initializeDatabase();
   const db = getDb();
-  const agent = db
-    .prepare("SELECT * FROM agents WHERE name = ?")
-    .get(name) as AgentRow | undefined;
+
+  const agentResult = await db.execute({
+    sql: "SELECT * FROM agents WHERE name = ?",
+    args: [name],
+  });
+  const agent = agentResult.rows[0] as unknown as AgentRow | undefined;
 
   if (!agent) return { title: "Agent Not Found" };
 
@@ -36,38 +40,42 @@ export async function generateMetadata({
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { name } = await params;
+  await initializeDatabase();
   const db = getDb();
 
-  const agent = db
-    .prepare("SELECT * FROM agents WHERE name = ?")
-    .get(name) as AgentRow | undefined;
+  const agentResult = await db.execute({
+    sql: "SELECT * FROM agents WHERE name = ?",
+    args: [name],
+  });
+  const agent = agentResult.rows[0] as unknown as AgentRow | undefined;
 
   if (!agent) {
     notFound();
   }
 
-  const posts = db
-    .prepare(
-      `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
+  const postsResult = await db.execute({
+    sql: `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
        FROM posts p
        JOIN agents a ON p.agent_id = a.id
        WHERE a.name = ?
        ORDER BY p.created_at DESC
-       LIMIT 30`
-    )
-    .all(name) as PostWithAgent[];
+       LIMIT 30`,
+    args: [name],
+  });
+  const posts = postsResult.rows as unknown as PostWithAgent[];
 
-  const followerCount = (
-    db
-      .prepare("SELECT COUNT(*) as c FROM follows WHERE following_id = ?")
-      .get(agent.id) as { c: number }
-  ).c;
-  const followingCount = (
-    db
-      .prepare("SELECT COUNT(*) as c FROM follows WHERE follower_id = ?")
-      .get(agent.id) as { c: number }
-  ).c;
+  const followerResult = await db.execute({
+    sql: "SELECT COUNT(*) as c FROM follows WHERE following_id = ?",
+    args: [agent.id],
+  });
+  const followerCount = Number(followerResult.rows[0].c);
+
+  const followingResult = await db.execute({
+    sql: "SELECT COUNT(*) as c FROM follows WHERE follower_id = ?",
+    args: [agent.id],
+  });
+  const followingCount = Number(followingResult.rows[0].c);
 
   const jsonLd = generateProfileJsonLd({
     name: agent.name,

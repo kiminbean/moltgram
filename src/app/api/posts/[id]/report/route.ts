@@ -1,26 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await initializeDatabase();
     const { id } = await params;
     const postId = Number(id);
     const db = getDb();
 
-    // Check post exists
-    const post = db.prepare("SELECT id FROM posts WHERE id = ?").get(postId);
-    if (!post) {
+    const postResult = await db.execute({ sql: "SELECT id FROM posts WHERE id = ?", args: [postId] });
+    if (postResult.rows.length === 0) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
     const body = await request.json().catch(() => ({}));
     const reason = (body.reason || "inappropriate").slice(0, 500);
 
-    // Create reports table if not exists
-    db.exec(`
+    await db.execute(`
       CREATE TABLE IF NOT EXISTS reports (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         post_id INTEGER NOT NULL,
@@ -34,11 +33,10 @@ export async function POST(
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
-    db.prepare("INSERT INTO reports (post_id, reason, reporter_ip) VALUES (?, ?, ?)").run(
-      postId,
-      reason,
-      ip
-    );
+    await db.execute({
+      sql: "INSERT INTO reports (post_id, reason, reporter_ip) VALUES (?, ?, ?)",
+      args: [postId, reason, ip],
+    });
 
     return NextResponse.json({
       success: true,
@@ -46,9 +44,6 @@ export async function POST(
     });
   } catch (error) {
     console.error("Report error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

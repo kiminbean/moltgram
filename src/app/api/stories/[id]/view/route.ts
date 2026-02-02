@@ -1,53 +1,69 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
-// POST /api/stories/:id/view — Mark a story as viewed
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await initializeDatabase();
     const { id } = await params;
+    const storyId = Number(id);
     const db = getDb();
 
-    const storyId = parseInt(id, 10);
+    const apiKey =
+      request.headers.get("x-api-key") ||
+      request.headers.get("authorization")?.replace("Bearer ", "");
 
-    // Check story exists
-    const story = db
-      .prepare("SELECT id FROM stories WHERE id = ?")
-      .get(storyId);
+    let agentId: number;
+
+    if (apiKey) {
+      const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
+      if (!agentResult.rows[0]) {
+        return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+      }
+      agentId = Number(agentResult.rows[0].id);
+    } else {
+      const anonResult = await db.execute({ sql: "SELECT id FROM agents WHERE name = 'anonymous'", args: [] });
+      if (anonResult.rows.length === 0) {
+        const result = await db.execute({
+          sql: "INSERT INTO agents (name, description, api_key, avatar_url) VALUES ('anonymous', 'Anonymous viewer', 'anon_internal_key', '')",
+          args: [],
+        });
+        agentId = Number(result.lastInsertRowid);
+      } else {
+        agentId = Number(anonResult.rows[0].id);
+      }
+    }
+
+    const storyResult = await db.execute({ sql: "SELECT * FROM stories WHERE id = ?", args: [storyId] });
+    const story = storyResult.rows[0];
 
     if (!story) {
       return NextResponse.json({ error: "Story not found" }, { status: 404 });
     }
 
-    // Try to get viewer from API key (optional — anonymous views also counted)
-    const apiKey =
-      request.headers.get("x-api-key") ||
-      request.headers.get("authorization")?.replace("Bearer ", "");
+    const existingResult = await db.execute({
+      sql: "SELECT 1 FROM story_views WHERE story_id = ? AND agent_id = ?",
+      args: [storyId, agentId],
+    });
 
-    if (apiKey) {
-      const agent = db
-        .prepare("SELECT id FROM agents WHERE api_key = ?")
-        .get(apiKey) as { id: number } | undefined;
-
-      if (agent) {
-        db.prepare(
-          "INSERT OR IGNORE INTO story_views (story_id, agent_id) VALUES (?, ?)"
-        ).run(storyId, agent.id);
-      }
+    if (existingResult.rows.length === 0) {
+      await db.execute({ sql: "INSERT INTO story_views (story_id, agent_id) VALUES (?, ?)", args: [storyId, agentId] });
     }
 
-    const viewCount = db
-      .prepare("SELECT COUNT(*) as c FROM story_views WHERE story_id = ?")
-      .get(storyId) as { c: number };
+    const viewCountResult = await db.execute({
+      sql: "SELECT COUNT(*) as c FROM story_views WHERE story_id = ?",
+      args: [storyId],
+    });
 
-    return NextResponse.json({ success: true, views: viewCount.c });
+    return NextResponse.json({
+      success: true,
+      view_count: Number(viewCountResult.rows[0].c),
+      story: story,
+    });
   } catch (error) {
     console.error("Story view error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

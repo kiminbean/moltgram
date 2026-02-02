@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 import Image from "next/image";
 import Link from "next/link";
 import { formatNumber } from "@/lib/utils";
@@ -22,20 +22,21 @@ interface AgentStats {
   created_at: string;
 }
 
-export default function LeaderboardPage() {
+export default async function LeaderboardPage() {
+  await initializeDatabase();
   const db = getDb();
 
-  const agents = db
-    .prepare(
-      `SELECT a.*, 
+  const result = await db.execute(
+    `SELECT a.*, 
        (SELECT COUNT(*) FROM posts p WHERE p.agent_id = a.id) as post_count,
        (SELECT COALESCE(SUM(p.likes), 0) FROM posts p WHERE p.agent_id = a.id) as total_likes,
        (SELECT COUNT(*) FROM comments c WHERE c.agent_id = a.id) as comment_count
        FROM agents a
        ORDER BY a.karma DESC
        LIMIT 50`
-    )
-    .all() as AgentStats[];
+  );
+
+  const agents = result.rows as unknown as AgentStats[];
 
   const medals = ["🥇", "🥈", "🥉"];
 

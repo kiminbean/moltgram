@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb, type PostWithAgent } from "@/lib/db";
+import { getDb, initializeDatabase, type PostWithAgent } from "@/lib/db";
 
 // GET /api/collections/:id — Get collection detail with posts
 export async function GET(
@@ -8,38 +8,40 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    await initializeDatabase();
     const db = getDb();
 
-    const collection = db
-      .prepare(
-        `SELECT c.*, a.name as agent_name, a.avatar_url as agent_avatar
+    const collectionResult = await db.execute({
+      sql: `SELECT c.*, a.name as agent_name, a.avatar_url as agent_avatar
          FROM collections c
          JOIN agents a ON a.id = c.agent_id
-         WHERE c.id = ?`
-      )
-      .get(Number(id));
+         WHERE c.id = ?`,
+      args: [Number(id)],
+    });
 
-    if (!collection) {
+    if (collectionResult.rows.length === 0) {
       return NextResponse.json(
         { error: "Collection not found" },
         { status: 404 }
       );
     }
 
-    const posts = db
-      .prepare(
-        `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
+    const postsResult = await db.execute({
+      sql: `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
          (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count,
          ci.created_at as added_at
          FROM collection_items ci
          JOIN posts p ON p.id = ci.post_id
          JOIN agents a ON a.id = p.agent_id
          WHERE ci.collection_id = ?
-         ORDER BY ci.created_at DESC`
-      )
-      .all(Number(id)) as (PostWithAgent & { added_at: string })[];
+         ORDER BY ci.created_at DESC`,
+      args: [Number(id)],
+    });
 
-    return NextResponse.json({ collection, posts });
+    return NextResponse.json({
+      collection: collectionResult.rows[0],
+      posts: postsResult.rows,
+    });
   } catch (error) {
     console.error("Get collection error:", error);
     return NextResponse.json(
@@ -56,6 +58,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    await initializeDatabase();
     const db = getDb();
 
     const apiKey =
@@ -66,29 +69,36 @@ export async function DELETE(
       return NextResponse.json({ error: "API key required" }, { status: 401 });
     }
 
-    const agent = db
-      .prepare("SELECT id FROM agents WHERE api_key = ?")
-      .get(apiKey) as { id: number } | undefined;
+    const agentResult = await db.execute({
+      sql: "SELECT id FROM agents WHERE api_key = ?",
+      args: [apiKey],
+    });
+    const agent = agentResult.rows[0] as unknown as { id: number } | undefined;
 
     if (!agent) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
-    const collection = db
-      .prepare("SELECT * FROM collections WHERE id = ? AND agent_id = ?")
-      .get(Number(id), agent.id);
+    const collectionResult = await db.execute({
+      sql: "SELECT * FROM collections WHERE id = ? AND agent_id = ?",
+      args: [Number(id), agent.id],
+    });
 
-    if (!collection) {
+    if (collectionResult.rows.length === 0) {
       return NextResponse.json(
         { error: "Collection not found or not yours" },
         { status: 404 }
       );
     }
 
-    db.prepare("DELETE FROM collection_items WHERE collection_id = ?").run(
-      Number(id)
-    );
-    db.prepare("DELETE FROM collections WHERE id = ?").run(Number(id));
+    await db.execute({
+      sql: "DELETE FROM collection_items WHERE collection_id = ?",
+      args: [Number(id)],
+    });
+    await db.execute({
+      sql: "DELETE FROM collections WHERE id = ?",
+      args: [Number(id)],
+    });
 
     return NextResponse.json({ deleted: true });
   } catch (error) {

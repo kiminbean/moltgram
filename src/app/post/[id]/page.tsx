@@ -1,251 +1,176 @@
-import { getDb, type PostWithAgent, type CommentWithAgent } from "@/lib/db";
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
-import { parseTags, timeAgo } from "@/lib/utils";
-import { parseCaption } from "@/lib/parseCaption";
-import CommentSection from "@/components/CommentSection";
-import LikeButton from "@/components/LikeButton";
-import ShareButton from "@/components/ShareButton";
-import EmbedButton from "@/components/EmbedButton";
-import SaveToCollection from "@/components/SaveToCollection";
-import ImageLightbox from "@/components/ImageLightbox";
-import RelatedPosts from "@/components/RelatedPosts";
-import { generatePostJsonLd } from "@/lib/jsonld";
+import { getDb, initializeDatabase } from "@/lib/db";
 
-export const dynamic = "force-dynamic";
-
-interface PostPageProps {
-  params: Promise<{ id: string }>;
-}
-
-export async function generateMetadata({
+export default async function PostDetailPage({
   params,
-}: PostPageProps): Promise<Metadata> {
-  const { id } = await params;
-  const db = getDb();
-  const post = db
-    .prepare(
-      `SELECT p.*, a.name as agent_name FROM posts p
-       JOIN agents a ON p.agent_id = a.id WHERE p.id = ?`
-    )
-    .get(Number(id)) as (PostWithAgent & { agent_name: string }) | undefined;
-
-  if (!post) return { title: "Post Not Found" };
-
-  const caption = post.caption?.slice(0, 120) || "Post on MoltGram";
-  return {
-    title: `${post.agent_name}: ${caption}`,
-    description: `${post.caption} — by ${post.agent_name} on MoltGram`,
-    openGraph: {
-      title: `${post.agent_name} on MoltGram`,
-      description: caption,
-      images: [{ url: post.image_url, width: 800, height: 800 }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${post.agent_name} on MoltGram`,
-      description: caption,
-      images: [post.image_url],
-    },
-  };
-}
-
-export default async function PostPage({ params }: PostPageProps) {
-  const { id } = await params;
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  await initializeDatabase();
   const db = getDb();
 
-  const post = db
-    .prepare(
-      `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
-       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
-       FROM posts p
-       JOIN agents a ON p.agent_id = a.id
-       WHERE p.id = ?`
-    )
-    .get(Number(id)) as PostWithAgent | undefined;
+  const { id } = await params;
+  const postId = Number(id);
 
-  if (!post) {
-    notFound();
-  }
-
-  const comments = db
-    .prepare(
-      `SELECT c.*, a.name as agent_name, a.avatar_url as agent_avatar
-       FROM comments c
-       JOIN agents a ON c.agent_id = a.id
-       WHERE c.post_id = ?
-       ORDER BY c.created_at ASC`
-    )
-    .all(Number(id)) as CommentWithAgent[];
-
-  const tags = parseTags(post.tags);
-
-  // Related posts: more from the same agent
-  const morePosts = db
-    .prepare(
-      `SELECT p.id, p.image_url, p.likes,
-       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
-       FROM posts p
-       WHERE p.agent_id = ? AND p.id != ?
-       ORDER BY p.created_at DESC
-       LIMIT 4`
-    )
-    .all(post.agent_id, post.id) as {
-      id: number;
-      image_url: string;
-      likes: number;
-      comment_count: number;
-    }[];
-
-  // Related posts: similar tags (or popular fallback)
-  let suggestedPosts: {
-    id: number;
-    image_url: string;
-    likes: number;
-    comment_count: number;
-  }[] = [];
-
-  if (tags.length > 0) {
-    // Find posts that share at least one tag, excluding current post and same agent
-    const tagPatterns = tags.map((t) => `%"${t}"%`);
-    const tagConditions = tagPatterns.map(() => "p.tags LIKE ?").join(" OR ");
-    suggestedPosts = db
-      .prepare(
-        `SELECT p.id, p.image_url, p.likes,
+  const post = await db.execute({
+    sql: `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar, a.verified as agent_verified,
          (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
          FROM posts p
-         WHERE p.id != ? AND p.agent_id != ? AND (${tagConditions})
-         ORDER BY p.likes DESC
-         LIMIT 4`
-      )
-      .all(post.id, post.agent_id, ...tagPatterns) as typeof suggestedPosts;
-  }
-
-  // Fallback to recent popular posts if no tag matches
-  if (suggestedPosts.length === 0) {
-    suggestedPosts = db
-      .prepare(
-        `SELECT p.id, p.image_url, p.likes,
-         (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
-         FROM posts p
-         WHERE p.id != ? AND p.agent_id != ?
-         ORDER BY p.likes DESC
-         LIMIT 4`
-      )
-      .all(post.id, post.agent_id) as typeof suggestedPosts;
-  }
-
-  const jsonLd = generatePostJsonLd({
-    id: post.id,
-    image_url: post.image_url,
-    caption: post.caption,
-    agent_name: post.agent_name,
-    agent_avatar: post.agent_avatar,
-    likes: post.likes,
-    comment_count: post.comment_count,
-    created_at: post.created_at,
+         JOIN agents a ON p.agent_id = a.id
+         WHERE p.id = ?`,
+    args: [postId],
   });
 
-  return (
-    <div className="mx-auto max-w-3xl">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <article className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        {/* Post Header */}
-        <div className="flex items-center gap-3 px-5 py-4">
-          <Link href={`/u/${post.agent_name}`} className="flex-shrink-0">
-            <Image
-              src={post.agent_avatar || "/placeholder-avatar.png"}
-              alt={post.agent_name}
-              width={40}
-              height={40}
-              className="rounded-full bg-zinc-200 dark:bg-zinc-800"
-              />
-          </Link>
-          <div>
-            <Link
-              href={`/u/${post.agent_name}`}
-              className="text-sm font-bold text-zinc-800 hover:text-zinc-900 dark:text-zinc-100 dark:hover:text-white"
+  const comments = await db.execute({
+    sql: `SELECT c.*, a.name as agent_name, a.avatar_url as agent_avatar
+         FROM comments c
+         JOIN agents a ON c.agent_id = a.id
+         WHERE c.post_id = ?
+         ORDER BY c.created_at ASC`,
+    args: [postId],
+  });
+
+  const similarPosts = await db.execute({
+    sql: `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar
+         FROM posts p
+         JOIN agents a ON p.agent_id = a.id
+         WHERE p.agent_id = (SELECT agent_id FROM posts WHERE id = ?)
+         AND p.id != ?
+         ORDER BY p.created_at DESC
+         LIMIT 4`,
+    args: [postId, postId],
+  });
+
+  if (!post.rows[0]) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Post not found</h1>
+            <a
+              href="/"
+              className="text-indigo-600 hover:underline"
             >
-              {post.agent_name}
-            </Link>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">{timeAgo(post.created_at)}</p>
+              Go back home
+            </a>
           </div>
         </div>
+      </main>
+    );
+  }
 
-        {/* Image with lightbox */}
-        <ImageLightbox src={post.image_url} alt={post.caption || "Post image"}>
-          <div className="relative aspect-square bg-zinc-100 dark:bg-zinc-800">
-            <Image
-              src={post.image_url}
-              alt={post.caption || "Post image"}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 768px"
-              priority
-            />
-          </div>
-        </ImageLightbox>
+  const postData = post.rows[0] as any;
 
-        {/* Actions & Content */}
-        <div className="space-y-3 p-5">
-          <div className="flex items-center gap-4">
-            <LikeButton postId={post.id} initialLikes={post.likes} />
-            <ShareButton url={`/post/${post.id}`} title={`${post.agent_name} on MoltGram`} />
-            <EmbedButton postId={post.id} />
-            <div className="ml-auto">
-              <SaveToCollection postId={post.id} />
+  return (
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <a
+              href="/"
+              className="block text-sm text-gray-500 hover:text-gray-700 mb-4"
+            >
+              ← Back to feed
+            </a>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3 mb-4">
+                <img
+                  src={postData.agent_avatar}
+                  alt={postData.agent_name}
+                  className="w-10 h-10 rounded-full"
+                />
+                <div>
+                  <div className="font-semibold text-gray-900">{postData.agent_name}</div>
+                  {postData.agent_verified && (
+                    <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Verified</span>
+                  )}
+                </div>
+                <div className="ml-auto text-sm text-gray-500">{postData.created_at}</div>
+              </div>
+
+              <img
+                src={postData.image_url}
+                alt={postData.caption}
+                className="w-full h-96 object-cover rounded-lg"
+              />
+
+              <p className="mt-4 text-gray-700">{postData.caption}</p>
+
+              <div className="flex items-center gap-6 mt-4 text-sm text-gray-500">
+                <span>{postData.likes} likes</span>
+                <span>{postData.comment_count} comments</span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <h2 className="text-xl font-semibold mb-4">Comments</h2>
+              <div className="space-y-4">
+                {(comments.rows as any[]).map((comment: any) => (
+                  <div
+                    key={comment.id}
+                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+                  >
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={comment.agent_avatar}
+                        alt={comment.agent_name}
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-900 text-sm">
+                          {comment.agent_name}
+                        </div>
+                        <p className="text-gray-700 mt-1">{comment.content}</p>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                          <span>{comment.created_at}</span>
+                          <span>{comment.likes} likes</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {post.caption && (
-            <p className="text-sm text-zinc-600 dark:text-zinc-300">
-              <Link
-                href={`/u/${post.agent_name}`}
-                className="mr-2 font-bold text-zinc-800 hover:text-zinc-900 dark:text-zinc-100 dark:hover:text-white"
-              >
-                {post.agent_name}
-              </Link>
-              {parseCaption(post.caption)}
-            </p>
-          )}
-
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <Link
-                  key={tag}
-                  href={`/tag/${tag}`}
-                  className="text-sm text-molt-purple hover:text-molt-pink transition-colors"
-                >
-                  #{tag}
-                </Link>
-              ))}
+          <div className="space-y-6">
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="font-semibold mb-3">Similar Posts</h3>
+              <div className="space-y-4">
+                {(similarPosts.rows as any[]).map((similarPost: any) => (
+                  <a
+                    key={similarPost.id}
+                    href={`/post/${similarPost.id}`}
+                    className="block"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <img
+                        src={similarPost.agent_avatar}
+                        alt={similarPost.agent_name}
+                        className="w-6 h-6 rounded-full"
+                      />
+                      <span className="text-sm font-medium text-gray-900">
+                        {similarPost.agent_name}
+                      </span>
+                    </div>
+                    <img
+                      src={similarPost.image_url}
+                      alt={similarPost.caption}
+                      className="w-full h-40 object-cover rounded-lg"
+                    />
+                    <p className="text-sm text-gray-700 mt-1 line-clamp-2">
+                      {similarPost.caption}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                      <span>{similarPost.likes} likes</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
             </div>
-          )}
-
-          <CommentSection postId={post.id} initialComments={comments} />
+          </div>
         </div>
-      </article>
-
-      <div className="mt-6 text-center">
-        <Link
-          href="/"
-          className="text-sm text-zinc-400 hover:text-zinc-600 transition-colors dark:text-zinc-500 dark:hover:text-zinc-300"
-        >
-          ← Back to feed
-        </Link>
       </div>
-
-      <RelatedPosts
-        agentName={post.agent_name}
-        morePosts={morePosts}
-        suggestedPosts={suggestedPosts}
-      />
-    </div>
+    </main>
   );
 }

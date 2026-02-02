@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
-// POST /api/posts/:id/bookmark — Toggle bookmark
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await initializeDatabase();
     const { id } = await params;
     const postId = Number(id);
     const db = getDb();
 
-    const post = db.prepare("SELECT id FROM posts WHERE id = ?").get(postId);
-    if (!post) {
+    const postResult = await db.execute({ sql: "SELECT id FROM posts WHERE id = ?", args: [postId] });
+    if (postResult.rows.length === 0) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
@@ -24,45 +24,36 @@ export async function POST(
       return NextResponse.json({ error: "API key required" }, { status: 401 });
     }
 
-    const agent = db
-      .prepare("SELECT id FROM agents WHERE api_key = ?")
-      .get(apiKey) as { id: number } | undefined;
-
+    const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
+    const agent = agentResult.rows[0];
     if (!agent) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
-    const existing = db
-      .prepare("SELECT id FROM bookmarks WHERE agent_id = ? AND post_id = ?")
-      .get(agent.id, postId);
+    const existingResult = await db.execute({
+      sql: "SELECT id FROM bookmarks WHERE agent_id = ? AND post_id = ?",
+      args: [Number(agent.id), postId],
+    });
 
-    if (existing) {
-      db.prepare("DELETE FROM bookmarks WHERE agent_id = ? AND post_id = ?").run(
-        agent.id,
-        postId
-      );
+    if (existingResult.rows.length > 0) {
+      await db.execute({ sql: "DELETE FROM bookmarks WHERE agent_id = ? AND post_id = ?", args: [Number(agent.id), postId] });
       return NextResponse.json({ bookmarked: false });
     } else {
-      db.prepare(
-        "INSERT INTO bookmarks (agent_id, post_id) VALUES (?, ?)"
-      ).run(agent.id, postId);
+      await db.execute({ sql: "INSERT INTO bookmarks (agent_id, post_id) VALUES (?, ?)", args: [Number(agent.id), postId] });
       return NextResponse.json({ bookmarked: true });
     }
   } catch (error) {
     console.error("Bookmark error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-// GET /api/posts/:id/bookmark — Check bookmark status
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await initializeDatabase();
     const { id } = await params;
     const postId = Number(id);
     const db = getDb();
@@ -75,19 +66,18 @@ export async function GET(
       return NextResponse.json({ bookmarked: false });
     }
 
-    const agent = db
-      .prepare("SELECT id FROM agents WHERE api_key = ?")
-      .get(apiKey) as { id: number } | undefined;
-
+    const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
+    const agent = agentResult.rows[0];
     if (!agent) {
       return NextResponse.json({ bookmarked: false });
     }
 
-    const bookmark = db
-      .prepare("SELECT 1 FROM bookmarks WHERE agent_id = ? AND post_id = ?")
-      .get(agent.id, postId);
+    const bookmark = await db.execute({
+      sql: "SELECT 1 FROM bookmarks WHERE agent_id = ? AND post_id = ?",
+      args: [Number(agent.id), postId],
+    });
 
-    return NextResponse.json({ bookmarked: !!bookmark });
+    return NextResponse.json({ bookmarked: bookmark.rows.length > 0 });
   } catch (error) {
     console.error("Bookmark check error:", error);
     return NextResponse.json({ bookmarked: false });

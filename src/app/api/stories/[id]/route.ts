@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb, type StoryWithAgent } from "@/lib/db";
+import { getDb, initializeDatabase, type StoryWithAgent } from "@/lib/db";
 
 // GET /api/stories/:id — Get a single story
 export async function GET(
@@ -8,17 +8,19 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    await initializeDatabase();
     const db = getDb();
 
-    const story = db
-      .prepare(
-        `SELECT s.*, a.name as agent_name, a.avatar_url as agent_avatar, a.verified as agent_verified,
+    const result = await db.execute({
+      sql: `SELECT s.*, a.name as agent_name, a.avatar_url as agent_avatar, a.verified as agent_verified,
          (SELECT COUNT(*) FROM story_views sv WHERE sv.story_id = s.id) as view_count
          FROM stories s
          JOIN agents a ON s.agent_id = a.id
-         WHERE s.id = ?`
-      )
-      .get(parseInt(id, 10)) as StoryWithAgent | undefined;
+         WHERE s.id = ?`,
+      args: [parseInt(id, 10)],
+    });
+
+    const story = result.rows[0] as unknown as StoryWithAgent | undefined;
 
     if (!story) {
       return NextResponse.json({ error: "Story not found" }, { status: 404 });
@@ -41,6 +43,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    await initializeDatabase();
     const db = getDb();
 
     const apiKey =
@@ -51,17 +54,21 @@ export async function DELETE(
       return NextResponse.json({ error: "API key required" }, { status: 401 });
     }
 
-    const agent = db
-      .prepare("SELECT id FROM agents WHERE api_key = ?")
-      .get(apiKey) as { id: number } | undefined;
+    const agentResult = await db.execute({
+      sql: "SELECT id FROM agents WHERE api_key = ?",
+      args: [apiKey],
+    });
+    const agent = agentResult.rows[0] as unknown as { id: number } | undefined;
 
     if (!agent) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
-    const story = db
-      .prepare("SELECT agent_id FROM stories WHERE id = ?")
-      .get(parseInt(id, 10)) as { agent_id: number } | undefined;
+    const storyResult = await db.execute({
+      sql: "SELECT agent_id FROM stories WHERE id = ?",
+      args: [parseInt(id, 10)],
+    });
+    const story = storyResult.rows[0] as unknown as { agent_id: number } | undefined;
 
     if (!story) {
       return NextResponse.json({ error: "Story not found" }, { status: 404 });
@@ -71,7 +78,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Not your story" }, { status: 403 });
     }
 
-    db.prepare("DELETE FROM stories WHERE id = ?").run(parseInt(id, 10));
+    await db.execute({
+      sql: "DELETE FROM stories WHERE id = ?",
+      args: [parseInt(id, 10)],
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,4 +1,4 @@
-import { getDb, type PostWithAgent, type CollectionRow } from "@/lib/db";
+import { getDb, initializeDatabase, type PostWithAgent, type CollectionRow } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -14,16 +14,17 @@ export async function generateMetadata({
   params,
 }: CollectionPageProps): Promise<Metadata> {
   const { name, id } = await params;
+  await initializeDatabase();
   const db = getDb();
 
-  const collection = db
-    .prepare(
-      `SELECT c.*, a.name as agent_name
+  const result = await db.execute({
+    sql: `SELECT c.*, a.name as agent_name
        FROM collections c
        JOIN agents a ON a.id = c.agent_id
-       WHERE c.id = ? AND a.name = ?`
-    )
-    .get(Number(id), name) as (CollectionRow & { agent_name: string }) | undefined;
+       WHERE c.id = ? AND a.name = ?`,
+    args: [Number(id), name],
+  });
+  const collection = result.rows[0] as unknown as (CollectionRow & { agent_name: string }) | undefined;
 
   if (!collection) return { title: "Collection Not Found" };
 
@@ -39,16 +40,17 @@ export default async function CollectionPage({
   params,
 }: CollectionPageProps) {
   const { name, id } = await params;
+  await initializeDatabase();
   const db = getDb();
 
-  const collection = db
-    .prepare(
-      `SELECT c.*, a.name as agent_name, a.avatar_url as agent_avatar
+  const collectionResult = await db.execute({
+    sql: `SELECT c.*, a.name as agent_name, a.avatar_url as agent_avatar
        FROM collections c
        JOIN agents a ON a.id = c.agent_id
-       WHERE c.id = ? AND a.name = ?`
-    )
-    .get(Number(id), name) as
+       WHERE c.id = ? AND a.name = ?`,
+    args: [Number(id), name],
+  });
+  const collection = collectionResult.rows[0] as unknown as
     | (CollectionRow & { agent_name: string; agent_avatar: string })
     | undefined;
 
@@ -56,17 +58,17 @@ export default async function CollectionPage({
     notFound();
   }
 
-  const posts = db
-    .prepare(
-      `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
+  const postsResult = await db.execute({
+    sql: `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
        FROM collection_items ci
        JOIN posts p ON p.id = ci.post_id
        JOIN agents a ON a.id = p.agent_id
        WHERE ci.collection_id = ?
-       ORDER BY ci.created_at DESC`
-    )
-    .all(Number(id)) as PostWithAgent[];
+       ORDER BY ci.created_at DESC`,
+    args: [Number(id)],
+  });
+  const posts = postsResult.rows as unknown as PostWithAgent[];
 
   return (
     <div className="space-y-6">

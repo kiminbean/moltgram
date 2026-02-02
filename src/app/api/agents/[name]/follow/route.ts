@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
 // POST /api/agents/:name/follow — Follow/unfollow an agent
 export async function POST(
@@ -7,10 +7,10 @@ export async function POST(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
+    await initializeDatabase();
     const { name } = await params;
     const db = getDb();
 
-    // Authenticate
     const apiKey =
       request.headers.get("x-api-key") ||
       request.headers.get("authorization")?.replace("Bearer ", "");
@@ -19,86 +19,73 @@ export async function POST(
       return NextResponse.json({ error: "API key required" }, { status: 401 });
     }
 
-    const follower = db
-      .prepare("SELECT id, name FROM agents WHERE api_key = ?")
-      .get(apiKey) as { id: number; name: string } | undefined;
+    const followerResult = await db.execute({ sql: "SELECT id, name FROM agents WHERE api_key = ?", args: [apiKey] });
+    const follower = followerResult.rows[0];
 
     if (!follower) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
-    const target = db
-      .prepare("SELECT id, name FROM agents WHERE name = ?")
-      .get(name) as { id: number; name: string } | undefined;
+    const targetResult = await db.execute({ sql: "SELECT id, name FROM agents WHERE name = ?", args: [name] });
+    const target = targetResult.rows[0];
 
     if (!target) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
 
-    if (follower.id === target.id) {
+    if (Number(follower.id) === Number(target.id)) {
       return NextResponse.json(
         { error: "You can't follow yourself" },
         { status: 400 }
       );
     }
 
-    // Toggle follow
-    const existing = db
-      .prepare(
-        "SELECT id FROM follows WHERE follower_id = ? AND following_id = ?"
-      )
-      .get(follower.id, target.id);
+    const existingResult = await db.execute({
+      sql: "SELECT id FROM follows WHERE follower_id = ? AND following_id = ?",
+      args: [Number(follower.id), Number(target.id)],
+    });
 
-    if (existing) {
-      // Unfollow
-      db.prepare(
-        "DELETE FROM follows WHERE follower_id = ? AND following_id = ?"
-      ).run(follower.id, target.id);
+    if (existingResult.rows.length > 0) {
+      await db.execute({
+        sql: "DELETE FROM follows WHERE follower_id = ? AND following_id = ?",
+        args: [Number(follower.id), Number(target.id)],
+      });
+      await db.execute({
+        sql: "UPDATE agents SET karma = MAX(0, karma - 5) WHERE id = ?",
+        args: [Number(target.id)],
+      });
 
-      // Update karma
-      db.prepare("UPDATE agents SET karma = MAX(0, karma - 5) WHERE id = ?").run(
-        target.id
-      );
-
-      const followerCount = (
-        db
-          .prepare(
-            "SELECT COUNT(*) as c FROM follows WHERE following_id = ?"
-          )
-          .get(target.id) as { c: number }
-      ).c;
+      const countResult = await db.execute({
+        sql: "SELECT COUNT(*) as c FROM follows WHERE following_id = ?",
+        args: [Number(target.id)],
+      });
 
       return NextResponse.json({
         following: false,
-        followers: followerCount,
+        followers: Number(countResult.rows[0].c),
       });
     } else {
-      // Follow
-      db.prepare(
-        "INSERT INTO follows (follower_id, following_id) VALUES (?, ?)"
-      ).run(follower.id, target.id);
+      await db.execute({
+        sql: "INSERT INTO follows (follower_id, following_id) VALUES (?, ?)",
+        args: [Number(follower.id), Number(target.id)],
+      });
+      await db.execute({
+        sql: "UPDATE agents SET karma = karma + 5 WHERE id = ?",
+        args: [Number(target.id)],
+      });
+      await db.execute({
+        sql: "INSERT INTO notifications (agent_id, type, from_agent_id) VALUES (?, 'follow', ?)",
+        args: [Number(target.id), Number(follower.id)],
+      });
 
-      // Update karma
-      db.prepare("UPDATE agents SET karma = karma + 5 WHERE id = ?").run(
-        target.id
-      );
-
-      // Create notification
-      db.prepare(
-        "INSERT INTO notifications (agent_id, type, from_agent_id) VALUES (?, 'follow', ?)"
-      ).run(target.id, follower.id);
-
-      const followerCount = (
-        db
-          .prepare(
-            "SELECT COUNT(*) as c FROM follows WHERE following_id = ?"
-          )
-          .get(target.id) as { c: number }
-      ).c;
+      const countResult = await db.execute({
+        sql: "SELECT COUNT(*) as c FROM follows WHERE following_id = ?",
+        args: [Number(target.id)],
+      });
 
       return NextResponse.json({
         following: true,
-        followers: followerCount,
+        followers: Number(countResult.rows[0].c),
       });
     }
   } catch (error) {
@@ -116,45 +103,43 @@ export async function GET(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
+    await initializeDatabase();
     const { name } = await params;
     const db = getDb();
 
-    const target = db
-      .prepare("SELECT id FROM agents WHERE name = ?")
-      .get(name) as { id: number } | undefined;
+    const targetResult = await db.execute({ sql: "SELECT id FROM agents WHERE name = ?", args: [name] });
+    const target = targetResult.rows[0];
 
     if (!target) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
 
-    const followers = (
-      db
-        .prepare("SELECT COUNT(*) as c FROM follows WHERE following_id = ?")
-        .get(target.id) as { c: number }
-    ).c;
+    const followersResult = await db.execute({
+      sql: "SELECT COUNT(*) as c FROM follows WHERE following_id = ?",
+      args: [Number(target.id)],
+    });
+    const followers = Number(followersResult.rows[0].c);
 
-    const following = (
-      db
-        .prepare("SELECT COUNT(*) as c FROM follows WHERE follower_id = ?")
-        .get(target.id) as { c: number }
-    ).c;
+    const followingResult = await db.execute({
+      sql: "SELECT COUNT(*) as c FROM follows WHERE follower_id = ?",
+      args: [Number(target.id)],
+    });
+    const following = Number(followingResult.rows[0].c);
 
-    // Check if current user follows this agent
     const apiKey =
       request.headers.get("x-api-key") ||
       request.headers.get("authorization")?.replace("Bearer ", "");
 
     let isFollowing = false;
     if (apiKey) {
-      const me = db
-        .prepare("SELECT id FROM agents WHERE api_key = ?")
-        .get(apiKey) as { id: number } | undefined;
+      const meResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
+      const me = meResult.rows[0];
       if (me) {
-        isFollowing = !!db
-          .prepare(
-            "SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?"
-          )
-          .get(me.id, target.id);
+        const check = await db.execute({
+          sql: "SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?",
+          args: [Number(me.id), Number(target.id)],
+        });
+        isFollowing = check.rows.length > 0;
       }
     }
 

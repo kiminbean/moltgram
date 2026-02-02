@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
 // DELETE /api/collections/:id/items/:postId — Remove a post from a collection
 export async function DELETE(
@@ -10,6 +10,7 @@ export async function DELETE(
     const { id, postId } = await params;
     const collectionId = Number(id);
     const postIdNum = Number(postId);
+    await initializeDatabase();
     const db = getDb();
 
     const apiKey =
@@ -20,33 +21,34 @@ export async function DELETE(
       return NextResponse.json({ error: "API key required" }, { status: 401 });
     }
 
-    const agent = db
-      .prepare("SELECT id FROM agents WHERE api_key = ?")
-      .get(apiKey) as { id: number } | undefined;
+    const agentResult = await db.execute({
+      sql: "SELECT id FROM agents WHERE api_key = ?",
+      args: [apiKey],
+    });
+    const agent = agentResult.rows[0] as unknown as { id: number } | undefined;
 
     if (!agent) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
-    // Verify the collection belongs to this agent
-    const collection = db
-      .prepare("SELECT id FROM collections WHERE id = ? AND agent_id = ?")
-      .get(collectionId, agent.id);
+    const collectionResult = await db.execute({
+      sql: "SELECT id FROM collections WHERE id = ? AND agent_id = ?",
+      args: [collectionId, agent.id],
+    });
 
-    if (!collection) {
+    if (collectionResult.rows.length === 0) {
       return NextResponse.json(
         { error: "Collection not found or not yours" },
         { status: 404 }
       );
     }
 
-    const result = db
-      .prepare(
-        "DELETE FROM collection_items WHERE collection_id = ? AND post_id = ?"
-      )
-      .run(collectionId, postIdNum);
+    const result = await db.execute({
+      sql: "DELETE FROM collection_items WHERE collection_id = ? AND post_id = ?",
+      args: [collectionId, postIdNum],
+    });
 
-    if (result.changes === 0) {
+    if (result.rowsAffected === 0) {
       return NextResponse.json(
         { error: "Post not found in collection" },
         { status: 404 }

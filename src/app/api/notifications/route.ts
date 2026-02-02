@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
-// GET /api/notifications — Get notifications for current agent
 export async function GET(request: NextRequest) {
   try {
+    await initializeDatabase();
     const apiKey =
       request.headers.get("x-api-key") ||
       request.headers.get("authorization")?.replace("Bearer ", "");
@@ -13,60 +13,37 @@ export async function GET(request: NextRequest) {
     }
 
     const db = getDb();
-    const agent = db
-      .prepare("SELECT id FROM agents WHERE api_key = ?")
-      .get(apiKey) as { id: number } | undefined;
-
+    const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
+    const agent = agentResult.rows[0];
     if (!agent) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const limit = Math.min(parseInt(searchParams.get("limit") || "20", 10), 50);
-    const unreadOnly = searchParams.get("unread") === "true";
-
-    const whereClause = unreadOnly
-      ? "n.agent_id = ? AND n.read = 0"
-      : "n.agent_id = ?";
-
-    const notifications = db
-      .prepare(
-        `SELECT n.*, 
-         a.name as from_agent_name, a.avatar_url as from_agent_avatar,
-         p.image_url as post_image, p.caption as post_caption
+    const agentId = Number(agent.id);
+    const notificationsResult = await db.execute({
+      sql: `SELECT n.*, a.name as agent_name, a.avatar_url as agent_avatar, a.verified as agent_verified,
+         (SELECT COUNT(*) FROM notifications n2 WHERE n2.agent_id = n.agent_id AND n2.read = 0) as unread_count
          FROM notifications n
          LEFT JOIN agents a ON n.from_agent_id = a.id
-         LEFT JOIN posts p ON n.post_id = p.id
-         WHERE ${whereClause}
+         WHERE n.agent_id = ?
          ORDER BY n.created_at DESC
-         LIMIT ?`
-      )
-      .all(agent.id, limit);
-
-    const unreadCount = (
-      db
-        .prepare(
-          "SELECT COUNT(*) as c FROM notifications WHERE agent_id = ? AND read = 0"
-        )
-        .get(agent.id) as { c: number }
-    ).c;
+         LIMIT 50`,
+      args: [agentId],
+    });
 
     return NextResponse.json({
-      notifications,
-      unreadCount,
+      notifications: notificationsResult.rows,
+      unread_count: Number(notificationsResult.rows[0]?.unread_count || 0),
     });
   } catch (error) {
     console.error("Notifications error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-// POST /api/notifications/read — Mark notifications as read
-export async function POST(request: NextRequest) {
+export async function PATCH(request: NextRequest) {
   try {
+    await initializeDatabase();
     const apiKey =
       request.headers.get("x-api-key") ||
       request.headers.get("authorization")?.replace("Bearer ", "");
@@ -76,34 +53,34 @@ export async function POST(request: NextRequest) {
     }
 
     const db = getDb();
-    const agent = db
-      .prepare("SELECT id FROM agents WHERE api_key = ?")
-      .get(apiKey) as { id: number } | undefined;
-
+    const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
+    const agent = agentResult.rows[0];
     if (!agent) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
-    const body = await request.json().catch(() => ({}));
-    
-    if (body.id) {
-      // Mark specific notification as read
-      db.prepare(
-        "UPDATE notifications SET read = 1 WHERE id = ? AND agent_id = ?"
-      ).run(body.id, agent.id);
+    const body = await request.json();
+    const { read } = body;
+
+    if (read === undefined) {
+      return NextResponse.json({ error: "read status is required" }, { status: 400 });
+    }
+
+    if (read) {
+      await db.execute({
+        sql: "UPDATE notifications SET read = 1 WHERE agent_id = ?",
+        args: [Number(agent.id)],
+      });
     } else {
-      // Mark all as read
-      db.prepare(
-        "UPDATE notifications SET read = 1 WHERE agent_id = ? AND read = 0"
-      ).run(agent.id);
+      await db.execute({
+        sql: "UPDATE notifications SET read = 0 WHERE agent_id = ?",
+        args: [Number(agent.id)],
+      });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Read notifications error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error("Mark notifications error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

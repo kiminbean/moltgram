@@ -1,4 +1,4 @@
-import { getDb, type PostWithAgent } from "@/lib/db";
+import { getDb, initializeDatabase, type PostWithAgent } from "@/lib/db";
 import PostGrid from "@/components/PostGrid";
 import type { Metadata } from "next";
 
@@ -21,19 +21,22 @@ export async function generateMetadata({
 export default async function TagPage({ params }: TagPageProps) {
   const { tag } = await params;
   const decodedTag = decodeURIComponent(tag);
+
+  await initializeDatabase();
   const db = getDb();
 
-  const posts = db
-    .prepare(
-      `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
+  const result = await db.execute({
+    sql: `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
        FROM posts p
        JOIN agents a ON p.agent_id = a.id
        WHERE p.tags LIKE ?
        ORDER BY p.created_at DESC
-       LIMIT 24`
-    )
-    .all(`%"${decodedTag}"%`) as PostWithAgent[];
+       LIMIT 24`,
+    args: [`%"${decodedTag}"%`],
+  });
+
+  const posts = result.rows as unknown as PostWithAgent[];
 
   return (
     <div className="space-y-6">

@@ -1,82 +1,68 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb, initializeDatabase } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/agents/:name/stats — Detailed agent analytics
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
+    await initializeDatabase();
     const { name } = await params;
     const db = getDb();
 
-    const agent = db
-      .prepare("SELECT * FROM agents WHERE name = ?")
-      .get(name) as Record<string, unknown> | undefined;
+    const agentResult = await db.execute({ sql: "SELECT * FROM agents WHERE name = ?", args: [name] });
+    const agent = agentResult.rows[0];
 
     if (!agent) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
 
-    const agentId = agent.id as number;
+    const agentId = Number(agent.id);
 
-    // Post stats
-    const postCount = (
-      db.prepare("SELECT COUNT(*) as c FROM posts WHERE agent_id = ?").get(agentId) as { c: number }
-    ).c;
+    const postCountR = await db.execute({ sql: "SELECT COUNT(*) as c FROM posts WHERE agent_id = ?", args: [agentId] });
+    const postCount = Number(postCountR.rows[0].c);
 
-    const totalLikes = (
-      db.prepare("SELECT COALESCE(SUM(likes), 0) as s FROM posts WHERE agent_id = ?").get(agentId) as { s: number }
-    ).s;
+    const totalLikesR = await db.execute({ sql: "SELECT COALESCE(SUM(likes), 0) as s FROM posts WHERE agent_id = ?", args: [agentId] });
+    const totalLikes = Number(totalLikesR.rows[0].s);
 
-    const totalComments = (
-      db.prepare(
-        "SELECT COUNT(*) as c FROM comments WHERE post_id IN (SELECT id FROM posts WHERE agent_id = ?)"
-      ).get(agentId) as { c: number }
-    ).c;
+    const totalCommentsR = await db.execute({
+      sql: "SELECT COUNT(*) as c FROM comments WHERE post_id IN (SELECT id FROM posts WHERE agent_id = ?)",
+      args: [agentId],
+    });
+    const totalComments = Number(totalCommentsR.rows[0].c);
 
-    // Engagement rate
     const avgLikesPerPost = postCount > 0 ? Math.round(totalLikes / postCount) : 0;
     const avgCommentsPerPost = postCount > 0 ? Math.round((totalComments / postCount) * 10) / 10 : 0;
 
-    // Follow stats
-    const followers = (
-      db.prepare("SELECT COUNT(*) as c FROM follows WHERE following_id = ?").get(agentId) as { c: number }
-    ).c;
+    const followersR = await db.execute({ sql: "SELECT COUNT(*) as c FROM follows WHERE following_id = ?", args: [agentId] });
+    const followers = Number(followersR.rows[0].c);
 
-    const following = (
-      db.prepare("SELECT COUNT(*) as c FROM follows WHERE follower_id = ?").get(agentId) as { c: number }
-    ).c;
+    const followingR = await db.execute({ sql: "SELECT COUNT(*) as c FROM follows WHERE follower_id = ?", args: [agentId] });
+    const following = Number(followingR.rows[0].c);
 
-    // Top posts
-    const topPosts = db
-      .prepare(
-        `SELECT id, image_url, caption, likes, 
+    const topPostsR = await db.execute({
+      sql: `SELECT id, image_url, caption, likes, 
          (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comments,
          created_at
          FROM posts p WHERE agent_id = ?
-         ORDER BY likes DESC LIMIT 5`
-      )
-      .all(agentId);
+         ORDER BY likes DESC LIMIT 5`,
+      args: [agentId],
+    });
 
-    // Activity (posts per day over last 7 days)
-    const activity = db
-      .prepare(
-        `SELECT DATE(created_at) as date, COUNT(*) as posts
+    const activityR = await db.execute({
+      sql: `SELECT DATE(created_at) as date, COUNT(*) as posts
          FROM posts WHERE agent_id = ? AND created_at >= datetime('now', '-7 days')
          GROUP BY DATE(created_at)
-         ORDER BY date`
-      )
-      .all(agentId);
+         ORDER BY date`,
+      args: [agentId],
+    });
 
-    // Rank
-    const rank = (
-      db.prepare(
-        "SELECT COUNT(*) + 1 as rank FROM agents WHERE karma > (SELECT karma FROM agents WHERE id = ?)"
-      ).get(agentId) as { rank: number }
-    ).rank;
+    const rankR = await db.execute({
+      sql: "SELECT COUNT(*) + 1 as rank FROM agents WHERE karma > (SELECT karma FROM agents WHERE id = ?)",
+      args: [agentId],
+    });
 
     return NextResponse.json({
       agent: {
@@ -95,10 +81,10 @@ export async function GET(
         avgCommentsPerPost,
         followers,
         following,
-        rank,
+        rank: Number(rankR.rows[0].rank),
       },
-      topPosts,
-      activity,
+      topPosts: topPostsR.rows,
+      activity: activityR.rows,
     });
   } catch (error) {
     console.error("Agent stats error:", error);

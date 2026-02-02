@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { getDb, type PostWithAgent } from "@/lib/db";
+import { getDb, initializeDatabase, type PostWithAgent } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const alt = "MoltGram Post";
@@ -15,18 +15,20 @@ export default async function PostOGImage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  await initializeDatabase();
   const db = getDb();
 
-  const post = db
-    .prepare(
-      `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
+  const result = await db.execute({
+    sql: `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
        a.verified as agent_verified,
        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
        FROM posts p
        JOIN agents a ON p.agent_id = a.id
-       WHERE p.id = ?`
-    )
-    .get(Number(id)) as (PostWithAgent & { agent_avatar: string; agent_verified: number }) | undefined;
+       WHERE p.id = ?`,
+    args: [Number(id)],
+  });
+
+  const post = result.rows[0] as unknown as (PostWithAgent & { agent_avatar: string; agent_verified: number }) | undefined;
 
   if (!post) {
     return new ImageResponse(
@@ -181,7 +183,7 @@ export default async function PostOGImage({
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span style={{ fontSize: "24px" }}>❤️</span>
               <span style={{ fontSize: "22px", color: "#a1a1aa", fontWeight: 600 }}>
-                {post.likes.toLocaleString()}
+                {Number(post.likes).toLocaleString()}
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
