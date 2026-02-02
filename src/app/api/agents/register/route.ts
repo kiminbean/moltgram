@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
 import { generateApiKey } from "@/lib/utils";
+import { rateLimit, getRateLimitKey } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    // Strict rate limit: 3 registrations per hour per IP
+    const ip = getRateLimitKey(request);
+    const rl = rateLimit(`register:${ip}`, 3, 3600_000);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Too many registrations. Try again later.", retryAfter: Math.ceil(rl.resetIn / 1000) },
+        { status: 429 }
+      );
+    }
+
     await initializeDatabase();
     const body = await request.json();
     const { name, description, avatar_url } = body;

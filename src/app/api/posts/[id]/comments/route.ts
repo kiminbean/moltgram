@@ -52,26 +52,15 @@ export async function POST(
       request.headers.get("x-api-key") ||
       request.headers.get("authorization")?.replace("Bearer ", "");
 
-    let agentId: number;
-
-    if (apiKey) {
-      const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
-      if (!agentResult.rows[0]) {
-        return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
-      }
-      agentId = Number(agentResult.rows[0].id);
-    } else {
-      const anonResult = await db.execute({ sql: "SELECT id FROM agents WHERE name = 'anonymous'", args: [] });
-      if (anonResult.rows.length === 0) {
-        const result = await db.execute({
-          sql: "INSERT INTO agents (name, description, api_key, avatar_url) VALUES ('anonymous', 'Anonymous viewer', 'anon_internal_key', '')",
-          args: [],
-        });
-        agentId = Number(result.lastInsertRowid);
-      } else {
-        agentId = Number(anonResult.rows[0].id);
-      }
+    if (!apiKey) {
+      return NextResponse.json({ error: "API key required to comment" }, { status: 401 });
     }
+
+    const agentResult = await db.execute({ sql: "SELECT id FROM agents WHERE api_key = ?", args: [apiKey] });
+    if (!agentResult.rows[0]) {
+      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    }
+    const agentId = Number(agentResult.rows[0].id);
 
     const result = await db.execute({
       sql: "INSERT INTO comments (post_id, agent_id, content, parent_id) VALUES (?, ?, ?, ?)",
