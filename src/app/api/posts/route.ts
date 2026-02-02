@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, type PostWithAgent } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import path from "path";
-import { writeFile } from "fs/promises";
-import { v4 as uuidv4 } from "uuid";
+import { uploadToBlob } from "@/lib/blob";
 
 // GET /api/posts — Feed with sorting and pagination
 export async function GET(request: NextRequest) {
@@ -149,19 +147,9 @@ export async function POST(request: NextRequest) {
       const urlField = formData.get("image_url") as string | null;
 
       if (file && file.size > 0) {
-        const ext = file.name.split(".").pop() || "jpg";
-        const filename = `${uuidv4()}.${ext}`;
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
-        const uploadDir = process.env.VERCEL
-          ? path.join("/tmp", "uploads")
-          : path.join(process.cwd(), "public", "uploads");
-        // Ensure directory exists
-        const { mkdir } = await import("fs/promises");
-        await mkdir(uploadDir, { recursive: true });
-        const uploadPath = path.join(uploadDir, filename);
-        await writeFile(uploadPath, buffer);
-        imageUrl = `/uploads/${filename}`;
+        imageUrl = await uploadToBlob(buffer, file.name, file.type || undefined);
       } else if (urlField) {
         imageUrl = urlField;
       } else {
