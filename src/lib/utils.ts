@@ -74,23 +74,67 @@ export function isPrivateUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     const hostname = parsed.hostname.toLowerCase();
-    // Block localhost variants
-    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1" || hostname === "0.0.0.0") return true;
+    // Strip IPv6 brackets for comparison
+    const bare = hostname.replace(/^\[|\]$/g, "");
+    // Block localhost variants (IPv4, IPv6, and bracketed)
+    if (bare === "localhost" || bare === "127.0.0.1" || bare === "::1" || bare === "0.0.0.0") return true;
     // Block metadata endpoints (AWS, GCP, Azure)
-    if (hostname === "169.254.169.254" || hostname === "metadata.google.internal") return true;
-    // Block private IP ranges
-    const parts = hostname.split(".");
-    if (parts.length === 4 && parts.every((p) => /^\d+$/.test(p))) {
-      const [a, b] = parts.map(Number);
-      if (a === 10) return true; // 10.0.0.0/8
-      if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
-      if (a === 192 && b === 168) return true; // 192.168.0.0/16
-      if (a === 169 && b === 254) return true; // 169.254.0.0/16 link-local
+    if (bare === "169.254.169.254" || bare === "metadata.google.internal") return true;
+    // Block IPv6 loopback & private ranges
+    if (bare.startsWith("::ffff:")) {
+      // IPv4-mapped IPv6 — two forms:
+      // 1. Dotted: ::ffff:127.0.0.1
+      // 2. Hex (normalized by URL parser): ::ffff:7f00:1
+      const mapped = bare.slice(7);
+      if (isPrivateIPv4(mapped)) return true;
+      // Parse hex form: e.g. "7f00:1" → 0x7f000001 → 127.0.0.1
+      const hexParts = mapped.split(":");
+      if (hexParts.length === 2) {
+        const hi = parseInt(hexParts[0], 16) || 0;
+        const lo = parseInt(hexParts[1], 16) || 0;
+        const ipNum = (hi << 16) | lo;
+        const a = (ipNum >> 24) & 0xff;
+        const b = (ipNum >> 16) & 0xff;
+        const reconstructed = `${a}.${b}.${(ipNum >> 8) & 0xff}.${ipNum & 0xff}`;
+        if (isPrivateIPv4(reconstructed)) return true;
+      }
+    }
+    if (bare === "0:0:0:0:0:0:0:1" || bare === "0000:0000:0000:0000:0000:0000:0000:0001") return true;
+    if (bare.startsWith("fe80:") || bare.startsWith("fe80%")) return true; // Link-local
+    if (bare.startsWith("fc") || bare.startsWith("fd")) return true; // Unique local (ULA)
+    // Block private IPv4 ranges (decimal notation)
+    if (isPrivateIPv4(bare)) return true;
+    // Block decimal/hex/octal IP representations (e.g. 2130706433 = 127.0.0.1)
+    if (/^\d+$/.test(bare)) {
+      const num = parseInt(bare, 10);
+      if (num === 0 || num === 2130706433 /* 127.0.0.1 */) return true;
+      if ((num >> 24) === 10) return true; // 10.0.0.0/8
+      if ((num >> 20) === (172 * 16 + 1)) return true; // 172.16.0.0/12 → 0xAC1
+      if ((num >> 16) === (192 * 256 + 168)) return true; // 192.168.0.0/16
+      if ((num >> 16) === (169 * 256 + 254)) return true; // 169.254.0.0/16
+    }
+    if (/^0x[0-9a-f]+$/i.test(bare)) {
+      const num = parseInt(bare, 16);
+      if (num === 2130706433 || (num >> 24) === 10 || (num >> 24) === 127) return true;
     }
     return false;
   } catch {
     return true; // If URL is invalid, treat as unsafe
   }
+}
+
+function isPrivateIPv4(host: string): boolean {
+  const parts = host.split(".");
+  if (parts.length === 4 && parts.every((p) => /^\d+$/.test(p))) {
+    const [a, b] = parts.map(Number);
+    if (a === 127) return true; // 127.0.0.0/8
+    if (a === 10) return true; // 10.0.0.0/8
+    if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+    if (a === 192 && b === 168) return true; // 192.168.0.0/16
+    if (a === 169 && b === 254) return true; // 169.254.0.0/16 link-local
+    if (a === 0) return true; // 0.0.0.0/8
+  }
+  return false;
 }
 
 /**
