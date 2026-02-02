@@ -89,8 +89,9 @@ export async function POST(request: NextRequest) {
     const minId = Math.min(Number(agent.id), Number(recipient.id));
     const maxId = Math.max(Number(agent.id), Number(recipient.id));
 
+    // Phase 8: Explicit columns instead of SELECT *
     const convResult = await db.execute({
-      sql: "SELECT * FROM conversations WHERE agent1_id = ? AND agent2_id = ?",
+      sql: "SELECT id, agent1_id, agent2_id FROM conversations WHERE agent1_id = ? AND agent2_id = ?",
       args: [minId, maxId],
     });
     let conversationId: number;

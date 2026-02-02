@@ -39,8 +39,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Phase 8: Explicit columns instead of SELECT *
     const convResult = await db.execute({
-      sql: "SELECT * FROM conversations WHERE id = ?",
+      sql: "SELECT id, agent1_id, agent2_id FROM conversations WHERE id = ?",
       args: [convId],
     });
     const conversation = convResult.rows[0] as unknown as

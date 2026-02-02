@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const agentId = Number(agent.id);
     const conversationsResult = await db.execute({
       sql: `SELECT 
-          c.*,
+          c.id, c.agent1_id, c.agent2_id, c.last_message_at, c.created_at,
           CASE WHEN c.agent1_id = ? THEN a2.name ELSE a1.name END as other_agent_name,
           CASE WHEN c.agent1_id = ? THEN a2.avatar_url ELSE a1.avatar_url END as other_agent_avatar,
           CASE WHEN c.agent1_id = ? THEN a2.verified ELSE a1.verified END as other_agent_verified,
@@ -89,8 +89,9 @@ export async function POST(request: NextRequest) {
     const minId = Math.min(Number(agent.id), Number(recipient.id));
     const maxId = Math.max(Number(agent.id), Number(recipient.id));
 
+    // Phase 8: Explicit columns instead of SELECT *
     const convResult = await db.execute({
-      sql: "SELECT * FROM conversations WHERE agent1_id = ? AND agent2_id = ?",
+      sql: "SELECT id, agent1_id, agent2_id, last_message_at, created_at FROM conversations WHERE agent1_id = ? AND agent2_id = ?",
       args: [minId, maxId],
     });
     let conversationId: number;

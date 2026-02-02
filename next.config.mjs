@@ -27,8 +27,11 @@ const nextConfig = {
             value: 'DENY',
           },
           {
+            // Phase 8: Modern browsers should use CSP, not X-XSS-Protection.
+            // Chrome removed support in v78. Setting to 0 disables legacy filter
+            // to avoid false-positive blocking (see: https://owasp.org/www-project-secure-headers/)
             key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            value: '0',
           },
           {
             key: 'Referrer-Policy',
@@ -36,12 +39,24 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          },
+          {
+            // Phase 8: Prevent DNS prefetching of external links
+            key: 'X-DNS-Prefetch-Control',
+            value: 'off',
+          },
+          {
+            // Phase 8: Cross-Origin-Opener-Policy isolates browsing context
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
           },
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
+              // unsafe-inline needed for Next.js styled-jsx; unsafe-eval needed for Next.js dev/HMR
+              // In production, Next.js inlines critical CSS which requires unsafe-inline
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://picsum.photos https://fastly.picsum.photos https://i.picsum.photos https://api.dicebear.com https://*.public.blob.vercel-storage.com",
@@ -50,6 +65,7 @@ const nextConfig = {
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
+              "upgrade-insecure-requests",
             ].join('; '),
           },
         ],

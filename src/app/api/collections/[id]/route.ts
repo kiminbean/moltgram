@@ -79,8 +79,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
+    // Phase 8: Explicit columns instead of SELECT *
     const collectionResult = await db.execute({
-      sql: "SELECT * FROM collections WHERE id = ? AND agent_id = ?",
+      sql: "SELECT id, agent_id, name, description, cover_url, created_at FROM collections WHERE id = ? AND agent_id = ?",
       args: [Number(id), agent.id],
     });
 

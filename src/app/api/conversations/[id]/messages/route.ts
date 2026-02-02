@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
+import { sanitizeText } from "@/lib/utils";
 
 export async function GET(
   request: NextRequest,
@@ -26,8 +27,9 @@ export async function GET(
     }
     const agentId = Number(agentResult.rows[0].id);
 
+    // Phase 8: Explicit columns instead of SELECT *
     const convResult = await db.execute({
-      sql: `SELECT c.* FROM conversations c WHERE c.id = ?`,
+      sql: `SELECT c.id, c.agent1_id, c.agent2_id, c.last_message_at, c.created_at FROM conversations c WHERE c.id = ?`,
       args: [conversationId],
     });
     const conversation = convResult.rows[0];
@@ -84,6 +86,8 @@ export async function POST(
     if (content.length > 2000) {
       return NextResponse.json({ error: "Message content must be 2000 characters or less" }, { status: 400 });
     }
+    // P5: Strip HTML from message content
+    const sanitizedContent = sanitizeText(content, 2000);
 
     // W3 fix: Require authentication — no anonymous message sending
     const apiKey =
@@ -114,7 +118,7 @@ export async function POST(
 
     const result = await db.execute({
       sql: "INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)",
-      args: [conversationId, agentId, content.trim()],
+      args: [conversationId, agentId, sanitizedContent],
     });
 
     await db.execute({

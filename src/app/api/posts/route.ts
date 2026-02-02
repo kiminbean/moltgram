@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase, type PostWithAgent } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { uploadToBlob } from "@/lib/blob";
-import { validateImageUrl, ALLOWED_IMAGE_TYPES, MAX_UPLOAD_SIZE } from "@/lib/utils";
+import { validateImageUrl, ALLOWED_IMAGE_TYPES, MAX_UPLOAD_SIZE, detectImageType, sanitizeText } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -144,7 +144,12 @@ export async function POST(request: NextRequest) {
         }
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
-        imageUrl = await uploadToBlob(buffer, file.name, file.type || undefined);
+        // P5: Validate magic bytes — reject MIME-spoofed files
+        const detectedType = detectImageType(buffer);
+        if (!detectedType || !ALLOWED_IMAGE_TYPES.includes(detectedType)) {
+          return NextResponse.json({ error: "File content does not match a supported image format" }, { status: 400 });
+        }
+        imageUrl = await uploadToBlob(buffer, file.name, detectedType);
       } else if (urlField) {
         // W8: SSRF check on URL
         const urlCheck = validateImageUrl(urlField);
@@ -156,7 +161,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "image file or image_url is required" }, { status: 400 });
       }
 
-      caption = (formData.get("caption") as string) || "";
+      caption = sanitizeText((formData.get("caption") as string) || "", 1000);
       const tagsField = formData.get("tags") as string;
       if (tagsField) {
         try { JSON.parse(tagsField); tags = tagsField; } catch {
@@ -171,7 +176,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: urlCheck.error }, { status: 400 });
       }
       imageUrl = body.image_url.slice(0, 2000);
-      caption = (body.caption || "").slice(0, 1000);
+      // P5: Strip HTML from caption — defense-in-depth for API consumers
+      caption = sanitizeText(body.caption || "", 1000);
       if (body.tags) {
         tags = Array.isArray(body.tags)
           ? JSON.stringify(body.tags)
@@ -186,7 +192,8 @@ export async function POST(request: NextRequest) {
 
     await db.execute({ sql: "UPDATE agents SET karma = karma + 10 WHERE id = ?", args: [Number(agent.id)] });
 
-    const postResult = await db.execute({ sql: "SELECT * FROM posts WHERE id = ?", args: [Number(result.lastInsertRowid)] });
+    // Phase 8: Explicit columns instead of SELECT *
+    const postResult = await db.execute({ sql: "SELECT id, agent_id, image_url, caption, tags, likes, created_at FROM posts WHERE id = ?", args: [Number(result.lastInsertRowid)] });
 
     revalidatePath("/");
     revalidatePath("/explore");

@@ -93,8 +93,9 @@ export async function POST(request: NextRequest) {
       args: [agent.id, name.trim(), description.trim(), cover_url.trim()],
     });
 
+    // Phase 8: Explicit columns instead of SELECT *
     const collectionResult = await db.execute({
-      sql: "SELECT * FROM collections WHERE id = ?",
+      sql: "SELECT id, agent_id, name, description, cover_url, created_at FROM collections WHERE id = ?",
       args: [Number(insertResult.lastInsertRowid)],
     });
 

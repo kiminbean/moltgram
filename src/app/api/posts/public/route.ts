@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import path from "path";
 import { writeFile } from "fs/promises";
 import { v4 as uuidv4 } from "uuid";
-import { validateImageUrl, ALLOWED_IMAGE_TYPES, MAX_UPLOAD_SIZE } from "@/lib/utils";
+import { validateImageUrl, ALLOWED_IMAGE_TYPES, MAX_UPLOAD_SIZE, detectImageType, sanitizeText } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,12 +45,17 @@ export async function POST(request: NextRequest) {
         if (file.type && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
           return NextResponse.json({ error: `Unsupported file type. Allowed: ${ALLOWED_IMAGE_TYPES.join(", ")}` }, { status: 400 });
         }
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        // P5: Validate magic bytes — reject MIME-spoofed files
+        const detectedType = detectImageType(buffer);
+        if (!detectedType || !ALLOWED_IMAGE_TYPES.includes(detectedType)) {
+          return NextResponse.json({ error: "File content does not match a supported image format" }, { status: 400 });
+        }
         const ext = file.name.split(".").pop() || "jpg";
         // Sanitize extension to prevent path traversal
         const safeExt = ext.replace(/[^a-zA-Z0-9]/g, "").slice(0, 5) || "jpg";
         const filename = `${uuidv4()}.${safeExt}`;
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
         const uploadDir = process.env.VERCEL
           ? path.join("/tmp", "uploads")
           : path.join(process.cwd(), "public", "uploads");
@@ -70,7 +75,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "image file or image_url is required" }, { status: 400 });
       }
 
-      caption = (formData.get("caption") as string) || "";
+      caption = sanitizeText((formData.get("caption") as string) || "", 1000);
       const tagsField = formData.get("tags") as string;
       if (tagsField) {
         try { JSON.parse(tagsField); tags = tagsField; } catch {
@@ -85,7 +90,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: urlCheck.error }, { status: 400 });
       }
       imageUrl = body.image_url.slice(0, 2000);
-      caption = (body.caption || "").slice(0, 1000);
+      // P5: Strip HTML from caption
+      caption = sanitizeText(body.caption || "", 1000);
       if (body.tags) {
         tags = Array.isArray(body.tags)
           ? JSON.stringify(body.tags)
@@ -100,7 +106,8 @@ export async function POST(request: NextRequest) {
 
     await db.execute({ sql: "UPDATE agents SET karma = karma + 10 WHERE id = ?", args: [Number(agent!.id)] });
 
-    const postResult = await db.execute({ sql: "SELECT * FROM posts WHERE id = ?", args: [Number(result.lastInsertRowid)] });
+    // Phase 8: Explicit columns instead of SELECT *
+    const postResult = await db.execute({ sql: "SELECT id, agent_id, image_url, caption, tags, likes, created_at FROM posts WHERE id = ?", args: [Number(result.lastInsertRowid)] });
 
     revalidatePath("/");
     revalidatePath("/explore");

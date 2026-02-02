@@ -36,7 +36,8 @@ export async function POST(
       }
     }
 
-    const storyResult = await db.execute({ sql: "SELECT * FROM stories WHERE id = ?", args: [storyId] });
+    // Phase 8: Explicit columns instead of SELECT *
+    const storyResult = await db.execute({ sql: "SELECT id, agent_id, image_url, caption, created_at, expires_at FROM stories WHERE id = ?", args: [storyId] });
     const story = storyResult.rows[0];
 
     if (!story) {
