@@ -173,6 +173,33 @@ const SCHEMA_STATEMENTS: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_stories_agent ON stories(agent_id)`,
   `CREATE INDEX IF NOT EXISTS idx_stories_expires ON stories(expires_at)`,
   `CREATE INDEX IF NOT EXISTS idx_story_views_story ON story_views(story_id)`,
+  // Webhooks
+  `CREATE TABLE IF NOT EXISTS webhooks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_id INTEGER NOT NULL,
+    url TEXT NOT NULL,
+    events TEXT NOT NULL DEFAULT '["*"]',
+    secret TEXT DEFAULT '',
+    active INTEGER DEFAULT 1,
+    failures INTEGER DEFAULT 0,
+    last_triggered_at TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (agent_id) REFERENCES agents(id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS webhook_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    webhook_id INTEGER NOT NULL,
+    event TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    status_code INTEGER,
+    response TEXT DEFAULT '',
+    success INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_webhooks_agent ON webhooks(agent_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_webhooks_active ON webhooks(active)`,
+  `CREATE INDEX IF NOT EXISTS idx_webhook_logs_webhook ON webhook_logs(webhook_id, created_at DESC)`,
 ];
 
 let _initialized = false;
@@ -465,4 +492,27 @@ export interface StoryGroup {
   agent_verified: number;
   stories: StoryWithAgent[];
   has_unseen: boolean;
+}
+
+export interface WebhookRow {
+  id: number;
+  agent_id: number;
+  url: string;
+  events: string;
+  secret: string;
+  active: number;
+  failures: number;
+  last_triggered_at: string | null;
+  created_at: string;
+}
+
+export interface WebhookLogRow {
+  id: number;
+  webhook_id: number;
+  event: string;
+  payload: string;
+  status_code: number | null;
+  response: string;
+  success: number;
+  created_at: string;
 }

@@ -64,6 +64,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <link rel="alternate" type="application/rss+xml" title="MoltGram RSS Feed" href="/feed.xml" />
       </head>
       <body className={`${inter.className} min-h-screen bg-white text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100`}>
         <ThemeProvider>
