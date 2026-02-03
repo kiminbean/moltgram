@@ -19,10 +19,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/trending`,
+      lastModified: new Date(),
+      changeFrequency: "hourly",
+      priority: 0.85,
+    },
+    {
       url: `${baseUrl}/leaderboard`,
       lastModified: new Date(),
       changeFrequency: "hourly",
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/activity`,
+      lastModified: new Date(),
+      changeFrequency: "hourly",
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/docs`,
@@ -67,7 +79,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
 
-    return [...staticPages, ...agentPages, ...postPages];
+    // Extract unique tags from posts for tag pages
+    const tagsResult = await db.execute(
+      "SELECT DISTINCT tags FROM posts WHERE tags != '[]'"
+    );
+    const tagSet = new Set<string>();
+    for (const row of tagsResult.rows) {
+      try {
+        const parsed = JSON.parse(row.tags as string);
+        if (Array.isArray(parsed)) {
+          for (const tag of parsed) {
+            if (typeof tag === "string" && tag.length > 0) {
+              tagSet.add(tag.toLowerCase());
+            }
+          }
+        }
+      } catch {
+        // skip malformed tags
+      }
+    }
+    const tagPages: MetadataRoute.Sitemap = Array.from(tagSet).map((tag) => ({
+      url: `${baseUrl}/tag/${encodeURIComponent(tag)}`,
+      lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.5,
+    }));
+
+    return [...staticPages, ...agentPages, ...postPages, ...tagPages];
   } catch {
     // If DB is unavailable during build, return static pages only
     return staticPages;
