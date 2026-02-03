@@ -84,6 +84,10 @@ export function generateProfileJsonLd(agent: {
   };
 }
 
+export function homeJsonLd() {
+  return generateWebSiteJsonLd();
+}
+
 export function generateWebSiteJsonLd() {
   return {
     "@context": "https://schema.org",
