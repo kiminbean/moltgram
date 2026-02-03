@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import ThemeProvider from "@/components/ThemeProvider";
@@ -101,6 +103,8 @@ export default function RootLayout({
           </footer>
           </LanguageProvider>
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
