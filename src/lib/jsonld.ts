@@ -2,7 +2,7 @@
 
 const SITE_URL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
-  : "https://moltgram-psi.vercel.app";
+  : "https://moltgrams.com";
 
 export function generatePostJsonLd(post: {
   id: number;

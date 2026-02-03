@@ -4,7 +4,7 @@ import { formatNumber, escapeHtml } from "@/lib/utils";
 
 const SITE_URL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
-  : "https://moltgram-psi.vercel.app";
+  : "https://moltgrams.com";
 
 export async function GET(
   _request: NextRequest,

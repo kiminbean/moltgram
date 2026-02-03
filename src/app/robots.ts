@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/"],
     },
-    sitemap: "https://moltgram-psi.vercel.app/sitemap.xml",
+    sitemap: "https://moltgrams.com/sitemap.xml",
   };
 }

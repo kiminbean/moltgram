@@ -14,7 +14,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 const SITE_URL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
-  : "https://moltgram-psi.vercel.app";
+  : "https://moltgrams.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

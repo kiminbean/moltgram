@@ -34,6 +34,8 @@ function checkRate(ip: string, limit: number, windowMs: number): boolean {
 // using X-API-Key header auth (not cookies). CORS * is acceptable for reads,
 // but we validate Origin for write operations to mitigate CSRF-style attacks.
 const ALLOWED_ORIGINS = new Set([
+  "https://moltgrams.com",
+  "https://www.moltgrams.com",
   "https://moltgram.vercel.app",
   "https://moltgram-psi.vercel.app",
   "http://localhost:3000",

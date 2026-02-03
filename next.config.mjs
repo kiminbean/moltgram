@@ -9,42 +9,89 @@ const nextConfig = {
   outputFileTracingRoot: __dirname,
   // serverExternalPackages: ['better-sqlite3'], // Removed: migrated to @libsql/client
   async headers() {
+    const sharedSecurityHeaders = [
+      {
+        key: 'Strict-Transport-Security',
+        value: 'max-age=63072000; includeSubDomains; preload',
+      },
+      {
+        key: 'X-Content-Type-Options',
+        value: 'nosniff',
+      },
+      {
+        // Phase 8: Modern browsers should use CSP, not X-XSS-Protection.
+        // Chrome removed support in v78. Setting to 0 disables legacy filter
+        // to avoid false-positive blocking (see: https://owasp.org/www-project-secure-headers/)
+        key: 'X-XSS-Protection',
+        value: '0',
+      },
+      {
+        key: 'Referrer-Policy',
+        value: 'strict-origin-when-cross-origin',
+      },
+      {
+        key: 'Permissions-Policy',
+        value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+      },
+      {
+        // Phase 8: Prevent DNS prefetching of external links
+        key: 'X-DNS-Prefetch-Control',
+        value: 'off',
+      },
+    ];
+
+    const defaultCSP = [
+      "default-src 'self'",
+      // unsafe-inline needed for Next.js styled-jsx; unsafe-eval needed for Next.js dev/HMR
+      // In production, Next.js inlines critical CSS which requires unsafe-inline
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https://picsum.photos https://fastly.picsum.photos https://i.picsum.photos https://api.dicebear.com https://*.public.blob.vercel-storage.com",
+      "font-src 'self' data:",
+      "connect-src 'self' https://*.vercel-storage.com https://*.turso.io",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "upgrade-insecure-requests",
+    ].join('; ');
+
+    // Embed routes need permissive frame-ancestors so iframes work on other sites
+    const embedCSP = [
+      "default-src 'self'",
+      "script-src 'none'",
+      "style-src 'unsafe-inline'",
+      "img-src 'self' data: blob: https://picsum.photos https://fastly.picsum.photos https://i.picsum.photos https://api.dicebear.com https://*.public.blob.vercel-storage.com",
+      "font-src 'self'",
+      "connect-src 'none'",
+      "frame-ancestors *",
+      "base-uri 'none'",
+      "form-action 'none'",
+    ].join('; ');
+
     return [
       {
-        // Apply security headers to all routes
-        source: '/:path*',
+        // Embed routes: allow framing from any origin
+        source: '/embed/:path*',
         headers: [
+          ...sharedSecurityHeaders,
           {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
+            key: 'X-Frame-Options',
+            value: 'ALLOWALL',
           },
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            key: 'Content-Security-Policy',
+            value: embedCSP,
           },
+        ],
+      },
+      {
+        // All other routes: strict framing policy
+        source: '/((?!embed).*)',
+        headers: [
+          ...sharedSecurityHeaders,
           {
             key: 'X-Frame-Options',
             value: 'DENY',
-          },
-          {
-            // Phase 8: Modern browsers should use CSP, not X-XSS-Protection.
-            // Chrome removed support in v78. Setting to 0 disables legacy filter
-            // to avoid false-positive blocking (see: https://owasp.org/www-project-secure-headers/)
-            key: 'X-XSS-Protection',
-            value: '0',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
-          },
-          {
-            // Phase 8: Prevent DNS prefetching of external links
-            key: 'X-DNS-Prefetch-Control',
-            value: 'off',
           },
           {
             // Phase 8: Cross-Origin-Opener-Policy isolates browsing context
@@ -53,20 +100,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              // unsafe-inline needed for Next.js styled-jsx; unsafe-eval needed for Next.js dev/HMR
-              // In production, Next.js inlines critical CSS which requires unsafe-inline
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://picsum.photos https://fastly.picsum.photos https://i.picsum.photos https://api.dicebear.com https://*.public.blob.vercel-storage.com",
-              "font-src 'self' data:",
-              "connect-src 'self' https://*.vercel-storage.com https://*.turso.io",
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-              "upgrade-insecure-requests",
-            ].join('; '),
+            value: defaultCSP,
           },
         ],
       },
