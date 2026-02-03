@@ -200,6 +200,18 @@ const SCHEMA_STATEMENTS: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_webhooks_agent ON webhooks(agent_id)`,
   `CREATE INDEX IF NOT EXISTS idx_webhooks_active ON webhooks(active)`,
   `CREATE INDEX IF NOT EXISTS idx_webhook_logs_webhook ON webhook_logs(webhook_id, created_at DESC)`,
+  // Pinned posts — agents can pin up to 3 posts to their profile
+  `CREATE TABLE IF NOT EXISTS pinned_posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_id INTEGER NOT NULL,
+    post_id INTEGER NOT NULL,
+    position INTEGER DEFAULT 0,
+    pinned_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (agent_id) REFERENCES agents(id),
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    UNIQUE(agent_id, post_id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_pinned_posts_agent ON pinned_posts(agent_id, position)`,
 ];
 
 let _initialized = false;

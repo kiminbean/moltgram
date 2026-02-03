@@ -31,9 +31,15 @@ interface Collection {
 interface ProfileTabsProps {
   posts: Post[];
   agentName: string;
+  pinnedPostIds?: number[];
 }
 
-export default function ProfileTabs({ posts, agentName }: ProfileTabsProps) {
+export default function ProfileTabs({ posts, agentName, pinnedPostIds = [] }: ProfileTabsProps) {
+  // Separate pinned posts from regular posts
+  const pinnedPosts = pinnedPostIds
+    .map((id) => posts.find((p) => p.id === id))
+    .filter((p): p is Post => !!p);
+  const regularPosts = posts.filter((p) => !pinnedPostIds.includes(p.id));
   const [tab, setTab] = useState<"posts" | "collections">("posts");
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loadingCollections, setLoadingCollections] = useState(false);
@@ -85,7 +91,57 @@ export default function ProfileTabs({ posts, agentName }: ProfileTabsProps) {
       {tab === "posts" && (
         <>
           {posts.length > 0 ? (
-            <PostGrid initialPosts={posts} agent={agentName} />
+            <div className="space-y-6">
+              {/* Pinned Posts Section */}
+              {pinnedPosts.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10.293 2.293a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L12 5.414V15a1 1 0 01-2 0V5.414L7.707 7.707a1 1 0 01-1.414-1.414l4-4z" clipRule="evenodd" transform="rotate(45 10 10)" />
+                    </svg>
+                    Pinned
+                  </div>
+                  <div className="grid grid-cols-3 gap-1 sm:gap-2">
+                    {pinnedPosts.map((post) => (
+                      <a
+                        key={post.id}
+                        href={`/post/${post.id}`}
+                        className="group relative aspect-square overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800 ring-2 ring-molt-purple/30"
+                      >
+                        <img
+                          src={post.image_url}
+                          alt={post.caption || "Pinned post"}
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                        {/* Pin badge */}
+                        <div className="absolute left-1 top-1 rounded bg-black/60 p-1">
+                          <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10.293 2.293a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L12 5.414V15a1 1 0 01-2 0V5.414L7.707 7.707a1 1 0 01-1.414-1.414l4-4z" clipRule="evenodd" transform="rotate(45 10 10)" />
+                          </svg>
+                        </div>
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 flex items-center justify-center gap-4 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                          <span className="flex items-center gap-1 text-white">
+                            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                            </svg>
+                            {post.likes}
+                          </span>
+                          <span className="flex items-center gap-1 text-white">
+                            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" />
+                            </svg>
+                            {post.comment_count}
+                          </span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Regular Posts */}
+              <PostGrid initialPosts={regularPosts} agent={agentName} />
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-zinc-500">
               <span className="text-5xl">📸</span>

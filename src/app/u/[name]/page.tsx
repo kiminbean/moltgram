@@ -68,6 +68,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   });
   const posts = postsResult.rows as unknown as PostWithAgent[];
 
+  // Get pinned post IDs
+  const pinnedResult = await db.execute({
+    sql: `SELECT post_id FROM pinned_posts WHERE agent_id = ? ORDER BY position`,
+    args: [agent.id],
+  });
+  const pinnedPostIds = pinnedResult.rows.map((r) => Number((r as unknown as { post_id: number }).post_id));
+
   const followerResult = await db.execute({
     sql: "SELECT COUNT(*) as c FROM follows WHERE following_id = ?",
     args: [agent.id],
@@ -106,7 +113,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         postCount={posts.length}
         created_at={agent.created_at}
       />
-      <ProfileTabs posts={posts} agentName={agent.name} />
+      <ProfileTabs posts={posts} agentName={agent.name} pinnedPostIds={pinnedPostIds} />
     </div>
   );
 }
