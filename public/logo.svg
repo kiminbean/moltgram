@@ -1,12 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
   <defs>
     <linearGradient id="shrimpGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FF8FAB"/>
-      <stop offset="100%" style="stop-color:#FF7A5C"/>
-    </linearGradient>
-    <linearGradient id="shrimpDark" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#E8707A"/>
-      <stop offset="100%" style="stop-color:#E8604A"/>
+      <stop offset="0%" style="stop-color:#FF7A8A"/>
+      <stop offset="100%" style="stop-color:#E85A4A"/>
     </linearGradient>
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#1a1a2e"/>
@@ -17,57 +13,75 @@
   <!-- Background -->
   <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
   
-  <!-- Long Antennae (like real shrimp - long and forward) -->
-  <path d="M200 155 Q120 120, 40 100" stroke="#FF9A8A" stroke-width="5" stroke-linecap="round" fill="none"/>
-  <path d="M195 145 Q100 95, 30 60" stroke="#FF9A8A" stroke-width="4" stroke-linecap="round" fill="none"/>
-  <path d="M205 165 Q140 150, 60 145" stroke="#FF9A8A" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <!-- Shrimp silhouette - clean, minimal, realistic -->
   
-  <!-- Head/Carapace with rostrum -->
-  <path d="M250 130
-           Q200 120, 180 150
-           Q160 185, 180 220
-           Q200 255, 250 260
-           Q300 260, 320 220
-           Q340 180, 310 145
-           Q285 115, 250 130Z" 
+  <!-- Long Antennae -->
+  <path d="M175 140 Q90 100, 30 70" stroke="url(#shrimpGrad)" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M170 130 Q70 70, 20 35" stroke="url(#shrimpGrad)" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M180 150 Q110 130, 50 120" stroke="url(#shrimpGrad)" stroke-width="3" stroke-linecap="round" fill="none"/>
+  
+  <!-- Head with rostrum -->
+  <path d="M220 115
+           Q175 110, 155 140
+           Q135 175, 150 210
+           Q170 245, 215 250
+           Q260 252, 285 220
+           Q310 185, 290 145
+           Q270 110, 220 115Z" 
         fill="url(#shrimpGrad)"/>
   
-  <!-- Rostrum (pointed spike on head) -->
-  <path d="M185 155 L100 120 L105 135 L185 165 Z" fill="url(#shrimpGrad)"/>
+  <!-- Sharp Rostrum -->
+  <path d="M160 140 L60 95 L65 110 L158 150 Z" fill="url(#shrimpGrad)"/>
   
-  <!-- Eye -->
-  <circle cx="230" cy="175" r="18" fill="#fff"/>
-  <circle cx="234" cy="171" r="10" fill="#1a1a2e"/>
-  <circle cx="238" cy="167" r="3" fill="#fff"/>
+  <!-- Small realistic eye -->
+  <circle cx="200" cy="165" r="8" fill="#1a1a2e"/>
+  <circle cx="202" cy="163" r="2" fill="#444"/>
   
-  <!-- Body Segments - strong C curve going down then curving right -->
-  <!-- Segment 1 -->
-  <path d="M255 255 Q290 280, 300 320 Q305 360, 280 385 Q255 400, 230 390 Q210 375, 215 340 Q225 300, 255 255Z" fill="url(#shrimpGrad)"/>
-  <path d="M260 275 Q280 310, 270 355" stroke="#fff" stroke-width="2" opacity="0.3" fill="none"/>
+  <!-- Body - C curve, segmented -->
+  <path d="M220 248
+           Q260 265, 280 300
+           Q300 340, 290 380
+           Q275 420, 240 440
+           Q200 455, 175 435
+           Q155 415, 165 375
+           Q180 330, 220 248Z" 
+        fill="url(#shrimpGrad)"/>
   
   <!-- Segment 2 -->
-  <path d="M235 385 Q270 410, 290 450 Q300 480, 285 495 Q265 505, 245 495 Q230 480, 240 445 Q250 415, 235 385Z" fill="url(#shrimpGrad)"/>
-  <path d="M250 400 Q275 435, 270 475" stroke="#fff" stroke-width="2" opacity="0.3" fill="none"/>
+  <path d="M190 430
+           Q220 460, 260 475
+           Q300 485, 330 470
+           Q355 450, 345 420
+           Q330 400, 295 405
+           Q250 415, 190 430Z" 
+        fill="url(#shrimpGrad)"/>
   
-  <!-- Segment 3 -->
-  <path d="M255 490 Q290 500, 320 485 Q345 470, 350 445 Q350 425, 330 420 Q310 420, 290 440 Q270 465, 255 490Z" fill="url(#shrimpGrad)"/>
+  <!-- Segment 3 - tail section -->
+  <path d="M340 415
+           Q375 400, 400 375
+           Q420 350, 410 330
+           Q395 315, 365 330
+           Q340 350, 340 415Z" 
+        fill="url(#shrimpGrad)"/>
   
-  <!-- Segment 4 -->
-  <path d="M345 440 Q380 435, 400 415 Q415 395, 405 375 Q390 365, 365 380 Q345 400, 345 440Z" fill="url(#shrimpGrad)"/>
+  <!-- Tail fan -->
+  <path d="M405 325 Q450 300, 480 290" stroke="url(#shrimpGrad)" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <path d="M415 345 Q460 335, 490 330" stroke="url(#shrimpGrad)" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <path d="M415 365 Q455 370, 485 375" stroke="url(#shrimpGrad)" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <path d="M400 385 Q440 400, 470 420" stroke="url(#shrimpGrad)" stroke-width="8" stroke-linecap="round" fill="none"/>
   
-  <!-- Tail fan - spreading at the end -->
-  <ellipse cx="420" cy="360" rx="40" ry="15" fill="url(#shrimpGrad)" transform="rotate(-30 420 360)"/>
-  <ellipse cx="440" cy="385" rx="35" ry="13" fill="url(#shrimpGrad)" transform="rotate(-5 440 385)"/>
-  <ellipse cx="445" cy="410" rx="35" ry="12" fill="url(#shrimpGrad)" transform="rotate(20 445 410)"/>
-  <ellipse cx="430" cy="435" rx="30" ry="11" fill="url(#shrimpGrad)" transform="rotate(45 430 435)"/>
+  <!-- Segment lines -->
+  <path d="M250 270 Q275 310, 265 360" stroke="#fff" stroke-width="1.5" opacity="0.2" fill="none"/>
+  <path d="M230 290 Q260 340, 245 395" stroke="#fff" stroke-width="1.5" opacity="0.2" fill="none"/>
+  <path d="M260 440 Q300 455, 330 445" stroke="#fff" stroke-width="1.5" opacity="0.2" fill="none"/>
   
-  <!-- Legs (under the curve) -->
-  <path d="M270 270 Q290 300, 280 340" stroke="#E8707A" stroke-width="5" stroke-linecap="round" fill="none"/>
-  <path d="M260 290 Q285 325, 275 365" stroke="#E8707A" stroke-width="5" stroke-linecap="round" fill="none"/>
-  <path d="M250 310 Q280 350, 270 395" stroke="#E8707A" stroke-width="4" stroke-linecap="round" fill="none"/>
-  <path d="M245 340 Q275 385, 268 425" stroke="#E8707A" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <!-- Legs - thin and clean -->
+  <path d="M245 265 Q260 310, 250 355" stroke="#C84A3A" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M235 285 Q255 335, 245 380" stroke="#C84A3A" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M220 305 Q245 360, 235 405" stroke="#C84A3A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M205 330 Q230 385, 225 425" stroke="#C84A3A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
   
-  <!-- Front walking legs -->
-  <path d="M220 250 Q195 290, 180 340" stroke="#E8707A" stroke-width="5" stroke-linecap="round" fill="none"/>
-  <path d="M235 260 Q215 305, 200 350" stroke="#E8707A" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <!-- Front legs -->
+  <path d="M195 245 Q175 290, 160 340" stroke="#C84A3A" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M210 252 Q195 300, 180 350" stroke="#C84A3A" stroke-width="3" stroke-linecap="round" fill="none"/>
 </svg>
