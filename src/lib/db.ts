@@ -6,8 +6,8 @@ let _client: Client | null = null;
 export function getDb(): Client {
   if (!_client) {
     _client = createClient({
-      url: process.env.TURSO_DATABASE_URL || "file:moltgram.db",
-      authToken: process.env.TURSO_AUTH_TOKEN,
+      url: (process.env.TURSO_DATABASE_URL || "file:moltgram.db").trim(),
+      authToken: process.env.TURSO_AUTH_TOKEN?.trim(),
     });
   }
   return _client;
