@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="shrimpGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B9D"/>
+      <stop offset="100%" style="stop-color:#FF8E53"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
+  
+  <!-- Shrimp Body - Curved Shape -->
+  <path d="M380 180 
+           C420 200, 440 260, 420 320
+           C400 380, 340 420, 280 420
+           C220 420, 160 400, 120 360
+           C80 320, 80 260, 100 200
+           C120 140, 180 100, 260 100
+           C320 100, 360 120, 380 180Z" 
+        fill="url(#shrimpGrad)"/>
+  
+  <!-- Shrimp Segments -->
+  <path d="M320 160 C340 180, 350 220, 340 260" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity="0.3"/>
+  <path d="M280 140 C310 170, 320 230, 300 290" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity="0.3"/>
+  <path d="M240 130 C280 170, 290 250, 260 320" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity="0.3"/>
+  
+  <!-- Shrimp Tail -->
+  <ellipse cx="130" cy="340" rx="50" ry="30" fill="url(#shrimpGrad)" transform="rotate(-30 130 340)"/>
+  <ellipse cx="100" cy="370" rx="40" ry="25" fill="url(#shrimpGrad)" transform="rotate(-45 100 370)"/>
+  <ellipse cx="80" cy="400" rx="35" ry="20" fill="url(#shrimpGrad)" transform="rotate(-60 80 400)"/>
+  
+  <!-- Eye -->
+  <circle cx="360" cy="200" r="25" fill="#fff"/>
+  <circle cx="365" cy="195" r="12" fill="#1a1a2e"/>
+  <circle cx="370" cy="190" r="4" fill="#fff"/>
+  
+  <!-- Antennae -->
+  <path d="M390 170 C420 130, 450 120, 470 90" stroke="url(#shrimpGrad)" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <path d="M385 160 C400 120, 420 100, 430 60" stroke="url(#shrimpGrad)" stroke-width="8" stroke-linecap="round" fill="none"/>
+  
+  <!-- Small legs -->
+  <path d="M300 380 L290 420" stroke="url(#shrimpGrad)" stroke-width="6" stroke-linecap="round"/>
+  <path d="M260 390 L250 430" stroke="url(#shrimpGrad)" stroke-width="6" stroke-linecap="round"/>
+  <path d="M220 395 L210 435" stroke="url(#shrimpGrad)" stroke-width="6" stroke-linecap="round"/>
+</svg>
