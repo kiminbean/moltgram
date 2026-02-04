@@ -18,71 +18,86 @@
   <!-- Background -->
   <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
   
-  <!-- === SHRIMP BODY - Realistic C-curve === -->
+  <!-- === SHRIMP - Strong C-curve === -->
   
-  <!-- Long Antennae (behind head) -->
-  <path d="M320 95 Q400 50, 470 30" stroke="#FF8A9A" stroke-width="5" stroke-linecap="round" fill="none"/>
-  <path d="M310 85 Q370 30, 420 15" stroke="#FF8A9A" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <!-- Long Antennae -->
+  <path d="M380 70 Q430 40, 480 25" stroke="#FF8A9A" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M370 55 Q410 25, 455 10" stroke="#FF8A9A" stroke-width="4" stroke-linecap="round" fill="none"/>
   
-  <!-- Head/Carapace -->
-  <path d="M260 130 
-           Q320 100, 350 130
-           Q380 160, 360 200
-           Q340 240, 280 250
-           Q240 250, 220 220
-           Q200 190, 220 150
-           Q240 120, 260 130Z" 
+  <!-- Head/Carapace - positioned at top right -->
+  <path d="M320 100 
+           Q390 90, 410 140
+           Q430 190, 390 230
+           Q350 260, 290 250
+           Q240 240, 240 190
+           Q240 140, 280 110
+           Q300 95, 320 100Z" 
         fill="url(#shrimpGrad)"/>
   
-  <!-- Rostrum (pointed beak) -->
-  <path d="M350 130 L420 95 L415 115 L355 145 Z" fill="url(#shrimpGrad)"/>
+  <!-- Rostrum -->
+  <path d="M410 130 L480 85 L470 110 L415 150 Z" fill="url(#shrimpGrad)"/>
   
-  <!-- Eye stalk and eye -->
-  <ellipse cx="335" cy="145" rx="8" ry="12" fill="url(#shrimpGrad)"/>
-  <circle cx="345" cy="135" r="14" fill="#fff"/>
-  <circle cx="348" cy="132" r="8" fill="#1a1a2e"/>
-  <circle cx="351" cy="129" r="3" fill="#fff"/>
+  <!-- Eye -->
+  <circle cx="390" cy="145" r="16" fill="#fff"/>
+  <circle cx="394" cy="141" r="9" fill="#1a1a2e"/>
+  <circle cx="398" cy="137" r="3" fill="#fff"/>
   
-  <!-- Body Segment 1 -->
-  <path d="M220 220 Q260 240, 270 280 Q270 320, 230 340 Q190 350, 170 320 Q150 290, 175 255 Q200 225, 220 220Z" fill="url(#shrimpGrad)"/>
-  <path d="M235 235 Q250 260, 245 290" stroke="#FFD5DD" stroke-width="2" opacity="0.5" fill="none"/>
+  <!-- Body Segment 1 - curving down and left -->
+  <path d="M260 240 
+           Q290 270, 270 320
+           Q250 370, 200 380
+           Q150 385, 140 340
+           Q130 300, 170 260
+           Q210 230, 260 240Z" 
+        fill="url(#shrimpGrad)"/>
+  <path d="M245 260 Q260 300, 240 345" stroke="#FFD5DD" stroke-width="2" opacity="0.5" fill="none"/>
   
-  <!-- Body Segment 2 -->
-  <path d="M170 320 Q200 350, 190 390 Q180 420, 145 430 Q110 435, 100 405 Q90 375, 115 345 Q140 320, 170 320Z" fill="url(#shrimpGrad)"/>
-  <path d="M175 335 Q185 365, 175 395" stroke="#FFD5DD" stroke-width="2" opacity="0.5" fill="none"/>
+  <!-- Body Segment 2 - continuing the C curve -->
+  <path d="M145 335
+           Q170 380, 140 420
+           Q110 460, 65 455
+           Q30 450, 35 410
+           Q40 375, 85 350
+           Q120 330, 145 335Z" 
+        fill="url(#shrimpGrad)"/>
+  <path d="M135 355 Q145 390, 120 425" stroke="#FFD5DD" stroke-width="2" opacity="0.5" fill="none"/>
   
-  <!-- Body Segment 3 -->
-  <path d="M100 405 Q120 440, 95 465 Q70 485, 50 470 Q35 455, 50 425 Q65 400, 100 405Z" fill="url(#shrimpGrad)"/>
-  <path d="M100 415 Q105 440, 90 460" stroke="#FFD5DD" stroke-width="2" opacity="0.5" fill="none"/>
+  <!-- Body Segment 3 - tail section curving back up -->
+  <path d="M45 405
+           Q60 440, 45 470
+           Q30 495, 55 500
+           Q85 500, 100 475
+           Q110 455, 85 430
+           Q65 410, 45 405Z" 
+        fill="url(#shrimpGrad)"/>
   
-  <!-- Tail Fan -->
-  <ellipse cx="45" cy="480" rx="35" ry="12" fill="url(#shrimpLight)" transform="rotate(-30 45 480)"/>
-  <ellipse cx="30" cy="465" rx="30" ry="10" fill="url(#shrimpLight)" transform="rotate(-60 30 465)"/>
-  <ellipse cx="25" cy="445" rx="25" ry="9" fill="url(#shrimpLight)" transform="rotate(-80 25 445)"/>
-  <ellipse cx="60" cy="485" rx="30" ry="10" fill="url(#shrimpLight)" transform="rotate(-10 60 485)"/>
-  <ellipse cx="80" cy="480" rx="25" ry="9" fill="url(#shrimpLight)" transform="rotate(15 80 480)"/>
+  <!-- Tail Fan - fanning upward to complete C -->
+  <ellipse cx="85" cy="495" rx="32" ry="12" fill="url(#shrimpLight)" transform="rotate(20 85 495)"/>
+  <ellipse cx="110" cy="485" rx="28" ry="10" fill="url(#shrimpLight)" transform="rotate(45 110 485)"/>
+  <ellipse cx="125" cy="465" rx="25" ry="9" fill="url(#shrimpLight)" transform="rotate(70 125 465)"/>
+  <ellipse cx="60" cy="498" rx="28" ry="10" fill="url(#shrimpLight)" transform="rotate(-10 60 498)"/>
+  <ellipse cx="40" cy="490" rx="24" ry="9" fill="url(#shrimpLight)" transform="rotate(-35 40 490)"/>
   
-  <!-- Swimmerets (pleopods) under body -->
-  <path d="M200 340 Q210 370, 200 390" stroke="#FF8A9A" stroke-width="4" stroke-linecap="round" fill="none"/>
-  <path d="M170 370 Q180 400, 170 420" stroke="#FF8A9A" stroke-width="4" stroke-linecap="round" fill="none"/>
-  <path d="M140 400 Q150 425, 140 445" stroke="#FF8A9A" stroke-width="3" stroke-linecap="round" fill="none"/>
-  <path d="M110 425 Q118 445, 110 460" stroke="#FF8A9A" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- Swimmerets -->
+  <path d="M180 370 Q195 400, 185 430" stroke="#FF8A9A" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M145 395 Q160 425, 150 455" stroke="#FF8A9A" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M105 425 Q115 450, 105 475" stroke="#FF8A9A" stroke-width="3" stroke-linecap="round" fill="none"/>
   
-  <!-- Walking legs (pereopods) -->
-  <path d="M280 240 Q310 270, 300 310" stroke="#E85A5A" stroke-width="5" stroke-linecap="round" fill="none"/>
-  <path d="M265 255 Q300 290, 285 335" stroke="#E85A5A" stroke-width="5" stroke-linecap="round" fill="none"/>
-  <path d="M250 270 Q280 310, 265 355" stroke="#E85A5A" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <!-- Walking legs -->
+  <path d="M285 260 Q330 290, 320 340" stroke="#E85A5A" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M265 280 Q310 320, 295 370" stroke="#E85A5A" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M240 300 Q280 345, 260 395" stroke="#E85A5A" stroke-width="4" stroke-linecap="round" fill="none"/>
   
-  <!-- Front legs/claws (chelipeds) -->
-  <path d="M290 210 Q340 230, 355 280" stroke="#E85A5A" stroke-width="6" stroke-linecap="round" fill="none"/>
-  <circle cx="358" cy="285" r="8" fill="#FF8A9A"/>
-  <path d="M300 195 Q360 205, 385 250" stroke="#E85A5A" stroke-width="6" stroke-linecap="round" fill="none"/>
-  <circle cx="388" cy="255" r="8" fill="#FF8A9A"/>
+  <!-- Front claws -->
+  <path d="M310 230 Q370 250, 385 310" stroke="#E85A5A" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <circle cx="388" cy="315" r="9" fill="#FF8A9A"/>
+  <path d="M330 215 Q400 225, 420 280" stroke="#E85A5A" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <circle cx="423" cy="285" r="9" fill="#FF8A9A"/>
   
   <!-- Short antennules -->
-  <path d="M360 125 Q385 115, 405 120" stroke="#FF8A9A" stroke-width="3" stroke-linecap="round" fill="none"/>
-  <path d="M355 135 Q380 130, 400 138" stroke="#FF8A9A" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M415 140 Q445 130, 465 140" stroke="#FF8A9A" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M420 155 Q450 150, 470 160" stroke="#FF8A9A" stroke-width="3" stroke-linecap="round" fill="none"/>
   
-  <!-- Highlight on head -->
-  <ellipse cx="290" cy="160" rx="20" ry="12" fill="#FFD5DD" opacity="0.3" transform="rotate(-20 290 160)"/>
+  <!-- Highlight -->
+  <ellipse cx="340" cy="160" rx="22" ry="14" fill="#FFD5DD" opacity="0.3" transform="rotate(-15 340 160)"/>
 </svg>
