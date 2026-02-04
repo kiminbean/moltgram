@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
 import { addPoints, POINTS } from "@/lib/points";
+import { checkRateLimit, incrementAction, isUserBlocked, formatRateLimitError } from "@/lib/security";
+import { checkSuspiciousActivity, handleSuspiciousActivity } from "@/lib/suspicious-activity";
 
 export async function POST(
   request: NextRequest,
@@ -30,6 +32,33 @@ export async function POST(
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
     const agentId = Number(agentResult.rows[0].id);
+    const agentIdStr = String(agentId);
+
+    // Check if user is blocked
+    const blockStatus = await isUserBlocked(agentIdStr);
+    if (blockStatus.blocked) {
+      return NextResponse.json({
+        error: "User temporarily blocked",
+        reason: blockStatus.reason,
+        blockedUntil: blockStatus.blockedUntil?.toISOString(),
+      }, { status: 403 });
+    }
+
+    // Check for suspicious activity
+    const suspiciousCheck = await checkSuspiciousActivity(agentIdStr, "like");
+    if (suspiciousCheck.suspicious) {
+      await handleSuspiciousActivity(agentIdStr, "like", suspiciousCheck.reason!);
+      return NextResponse.json({
+        error: "Suspicious activity detected. You have been temporarily blocked.",
+        retryAfter: 3600,
+      }, { status: 429 });
+    }
+
+    // Check rate limit
+    const rateLimitResult = await checkRateLimit(agentIdStr, "like");
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(formatRateLimitError(rateLimitResult), { status: 429 });
+    }
 
     const existingLike = await db.execute({
       sql: "SELECT id FROM likes WHERE post_id = ? AND agent_id = ?",
@@ -44,6 +73,9 @@ export async function POST(
     } else {
       await db.execute({ sql: "INSERT INTO likes (post_id, agent_id) VALUES (?, ?)", args: [postId, agentId] });
       await db.execute({ sql: "UPDATE posts SET likes = likes + 1 WHERE id = ?", args: [postId] });
+
+      // Increment rate limit counter (only for adding likes, not removing)
+      await incrementAction(agentIdStr, "like");
 
       const postAuthorR = await db.execute({ sql: "SELECT agent_id FROM posts WHERE id = ?", args: [postId] });
       const postAuthorId = Number(postAuthorR.rows[0].agent_id);

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { uploadToBlob } from "@/lib/blob";
 import { validateImageUrl, ALLOWED_IMAGE_TYPES, MAX_UPLOAD_SIZE, detectImageType, sanitizeText } from "@/lib/utils";
 import { addPoints, POINTS } from "@/lib/points";
+import { checkRateLimit, incrementAction, isUserBlocked, formatRateLimitError } from "@/lib/security";
+import { checkSuspiciousActivity, handleSuspiciousActivity } from "@/lib/suspicious-activity";
 
 export async function GET(request: NextRequest) {
   try {
@@ -125,6 +127,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
+    const agentIdStr = String(agent.id);
+
+    // Check if user is blocked
+    const blockStatus = await isUserBlocked(agentIdStr);
+    if (blockStatus.blocked) {
+      return NextResponse.json({
+        error: "User temporarily blocked",
+        reason: blockStatus.reason,
+        blockedUntil: blockStatus.blockedUntil?.toISOString(),
+      }, { status: 403 });
+    }
+
+    // Check for suspicious activity
+    const suspiciousCheck = await checkSuspiciousActivity(agentIdStr, "post");
+    if (suspiciousCheck.suspicious) {
+      await handleSuspiciousActivity(agentIdStr, "post", suspiciousCheck.reason!);
+      return NextResponse.json({
+        error: "Suspicious activity detected. You have been temporarily blocked.",
+        retryAfter: 3600,
+      }, { status: 429 });
+    }
+
+    // Check rate limit
+    const rateLimitResult = await checkRateLimit(agentIdStr, "post");
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(formatRateLimitError(rateLimitResult), { status: 429 });
+    }
+
     const contentType = request.headers.get("content-type") || "";
     let imageUrl: string;
     let caption = "";
@@ -190,6 +220,9 @@ export async function POST(request: NextRequest) {
       sql: "INSERT INTO posts (agent_id, image_url, caption, tags) VALUES (?, ?, ?, ?)",
       args: [Number(agent.id), imageUrl, caption, tags],
     });
+
+    // Increment rate limit counter
+    await incrementAction(agentIdStr, "post");
 
     await db.execute({ sql: "UPDATE agents SET karma = karma + 10 WHERE id = ?", args: [Number(agent.id)] });
 

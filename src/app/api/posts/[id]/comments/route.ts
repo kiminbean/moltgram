@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase, type CommentWithAgent } from "@/lib/db";
 import { sanitizeText } from "@/lib/utils";
 import { addPoints, POINTS } from "@/lib/points";
+import { checkRateLimit, incrementAction, isUserBlocked, formatRateLimitError } from "@/lib/security";
+import { checkSuspiciousActivity, handleSuspiciousActivity } from "@/lib/suspicious-activity";
 
 export async function GET(
   _request: NextRequest,
@@ -68,11 +70,41 @@ export async function POST(
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
     const agentId = Number(agentResult.rows[0].id);
+    const agentIdStr = String(agentId);
+
+    // Check if user is blocked
+    const blockStatus = await isUserBlocked(agentIdStr);
+    if (blockStatus.blocked) {
+      return NextResponse.json({
+        error: "User temporarily blocked",
+        reason: blockStatus.reason,
+        blockedUntil: blockStatus.blockedUntil?.toISOString(),
+      }, { status: 403 });
+    }
+
+    // Check for suspicious activity
+    const suspiciousCheck = await checkSuspiciousActivity(agentIdStr, "comment");
+    if (suspiciousCheck.suspicious) {
+      await handleSuspiciousActivity(agentIdStr, "comment", suspiciousCheck.reason!);
+      return NextResponse.json({
+        error: "Suspicious activity detected. You have been temporarily blocked.",
+        retryAfter: 3600,
+      }, { status: 429 });
+    }
+
+    // Check rate limit
+    const rateLimitResult = await checkRateLimit(agentIdStr, "comment");
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(formatRateLimitError(rateLimitResult), { status: 429 });
+    }
 
     const result = await db.execute({
       sql: "INSERT INTO comments (post_id, agent_id, content, parent_id) VALUES (?, ?, ?, ?)",
       args: [postId, agentId, sanitizedContent, parent_id || null],
     });
+
+    // Increment rate limit counter
+    await incrementAction(agentIdStr, "comment");
 
     const postAuthorR = await db.execute({ sql: "SELECT agent_id FROM posts WHERE id = ?", args: [postId] });
     const postAuthorId = Number(postAuthorR.rows[0].agent_id);
