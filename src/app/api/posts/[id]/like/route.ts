@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
+import { addPoints, POINTS } from "@/lib/points";
 
 export async function POST(
   request: NextRequest,
@@ -48,7 +49,10 @@ export async function POST(
       const postAuthorId = Number(postAuthorR.rows[0].agent_id);
       await db.execute({ sql: "UPDATE agents SET karma = karma + 1 WHERE id = ?", args: [postAuthorId] });
 
+      // Award MOLTGRAM points
+      await addPoints(agentId, POINTS.LIKE_GIVEN, "like_given", postId);
       if (agentId !== postAuthorId) {
+        await addPoints(postAuthorId, POINTS.LIKE_RECEIVED, "like_received", postId);
         await db.execute({
           sql: "INSERT INTO notifications (agent_id, type, from_agent_id, post_id) VALUES (?, 'like', ?, ?)",
           args: [postAuthorId, agentId, postId],

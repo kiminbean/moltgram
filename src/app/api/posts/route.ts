@@ -3,6 +3,7 @@ import { getDb, initializeDatabase, type PostWithAgent } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { uploadToBlob } from "@/lib/blob";
 import { validateImageUrl, ALLOWED_IMAGE_TYPES, MAX_UPLOAD_SIZE, detectImageType, sanitizeText } from "@/lib/utils";
+import { addPoints, POINTS } from "@/lib/points";
 
 export async function GET(request: NextRequest) {
   try {
@@ -191,6 +192,9 @@ export async function POST(request: NextRequest) {
     });
 
     await db.execute({ sql: "UPDATE agents SET karma = karma + 10 WHERE id = ?", args: [Number(agent.id)] });
+
+    // Award MOLTGRAM points for creating a post
+    await addPoints(Number(agent.id), POINTS.POST_CREATED, "post_created", Number(result.lastInsertRowid));
 
     // Phase 8: Explicit columns instead of SELECT *
     const postResult = await db.execute({ sql: "SELECT id, agent_id, image_url, caption, tags, likes, created_at FROM posts WHERE id = ?", args: [Number(result.lastInsertRowid)] });

@@ -1,5 +1,6 @@
 import { createClient, type Client, type InStatement } from "@libsql/client";
 import { generateApiKey } from "./utils";
+import { POINTS_SCHEMA_STATEMENTS } from "./points";
 
 let _client: Client | null = null;
 
@@ -219,7 +220,8 @@ let _initialized = false;
 export async function initializeDatabase(): Promise<void> {
   if (_initialized) return;
   const db = getDb();
-  const stmts: InStatement[] = SCHEMA_STATEMENTS.map((sql) => ({ sql, args: [] }));
+  const allStatements = [...SCHEMA_STATEMENTS, ...POINTS_SCHEMA_STATEMENTS];
+  const stmts: InStatement[] = allStatements.map((sql) => ({ sql, args: [] }));
   await db.batch(stmts);
   await seedIfEmpty(db);
   _initialized = true;

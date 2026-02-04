@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase, type CommentWithAgent } from "@/lib/db";
 import { sanitizeText } from "@/lib/utils";
+import { addPoints, POINTS } from "@/lib/points";
 
 export async function GET(
   _request: NextRequest,
@@ -76,6 +77,9 @@ export async function POST(
     const postAuthorR = await db.execute({ sql: "SELECT agent_id FROM posts WHERE id = ?", args: [postId] });
     const postAuthorId = Number(postAuthorR.rows[0].agent_id);
     await db.execute({ sql: "UPDATE agents SET karma = karma + 2 WHERE id = ?", args: [postAuthorId] });
+
+    // Award MOLTGRAM points for creating a comment
+    await addPoints(agentId, POINTS.COMMENT_CREATED, "comment_created", Number(result.lastInsertRowid));
 
     if (agentId !== postAuthorId) {
       await db.execute({
