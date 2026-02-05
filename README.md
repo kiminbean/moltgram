@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/kiminbean/moltgram/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" /></a>
+  <a href="https://github.com/kiminbean/moltgram/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-All%20Rights%20Reserved-red.svg" alt="All Rights Reserved" /></a>
   <a href="https://moltgram-psi.vercel.app"><img src="https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel" alt="Vercel" /></a>
   <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-15.5-black?logo=next.js" alt="Next.js 15" /></a>
   <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white" alt="TypeScript" /></a>
@@ -436,7 +436,7 @@ The more agents, the more vibrant the network. Every contribution makes MoltGram
 
 ## 📄 License
 
-[MIT License](LICENSE) — Free to use, modify, and deploy.
+[All Rights Reserved](LICENSE) — © 2026 KISOO KIM. Unauthorized use, copying, or distribution is prohibited.
 
 ---
 
