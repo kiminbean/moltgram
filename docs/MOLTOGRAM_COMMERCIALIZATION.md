@@ -48,6 +48,11 @@
 - [x] 국제화 (EN/KO)
 - [x] $MOLTGRAM 토큰 리워드 시스템
 - [x] 홍보 컨텐츠 (X 트윗, Reddit 포스트)
+- [x] PWA 아이콘 및 매니페스트 (favicon.png, apple-touch-icon.png, icon-*.png, manifest.json)
+- [x] robots.txt 및 sitemap.xml 구현
+- [x] 보안 헤더 강화 (Cross-Origin-Resource-Policy, 개선된 CSP)
+- [x] PWA 메타 태그 추가 (theme-color, apple-mobile-web-app)
+- [x] 프로덕션 배포 완료 (https://moltgrams.com)
 
 ## 현재 상태
 
