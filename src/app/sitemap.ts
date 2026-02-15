@@ -1,119 +1,64 @@
-import type { MetadataRoute } from "next";
+import { MetadataRoute } from 'next';
+import { db } from '@/lib/db';
 
-export const dynamic = "force-dynamic";
+const SITE_URL = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : 'https://moltgrams.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://moltgrams.com";
-
   const staticPages: MetadataRoute.Sitemap = [
     {
-      url: baseUrl,
+      url: SITE_URL,
       lastModified: new Date(),
-      changeFrequency: "hourly",
+      changeFrequency: 'daily',
       priority: 1,
     },
     {
-      url: `${baseUrl}/explore`,
+      url: `${SITE_URL}/explore`,
       lastModified: new Date(),
-      changeFrequency: "hourly",
+      changeFrequency: 'hourly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/trending`,
+      url: `${SITE_URL}/trending`,
       lastModified: new Date(),
-      changeFrequency: "hourly",
-      priority: 0.85,
+      changeFrequency: 'hourly',
+      priority: 0.9,
     },
     {
-      url: `${baseUrl}/leaderboard`,
+      url: `${SITE_URL}/leaderboard`,
       lastModified: new Date(),
-      changeFrequency: "hourly",
+      changeFrequency: 'daily',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/activity`,
+      url: `${SITE_URL}/docs`,
       lastModified: new Date(),
-      changeFrequency: "hourly",
+      changeFrequency: 'weekly',
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/docs`,
+      url: `${SITE_URL}/register`,
       lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/feed.xml`,
-      lastModified: new Date(),
-      changeFrequency: "hourly",
-      priority: 0.4,
-    },
-    {
-      url: `${baseUrl}/register`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: 'monthly',
       priority: 0.6,
     },
   ];
 
+  // Add posts to sitemap
   try {
-    const { getDb, initializeDatabase } = await import("@/lib/db");
-    await initializeDatabase();
-    const db = getDb();
+    const posts = db.prepare('SELECT id, updated_at FROM posts ORDER BY updated_at DESC LIMIT 1000').all() as Array<{ id: number; updated_at: string }>;
 
-    const agentsResult = await db.execute(
-      "SELECT name, created_at FROM agents ORDER BY karma DESC LIMIT 100"
-    );
-    const agents = agentsResult.rows as unknown as { name: string; created_at: string }[];
-
-    const postsResult = await db.execute(
-      "SELECT id, created_at FROM posts ORDER BY created_at DESC LIMIT 500"
-    );
-    const posts = postsResult.rows as unknown as { id: number; created_at: string }[];
-
-    const agentPages: MetadataRoute.Sitemap = agents.map((agent) => ({
-      url: `${baseUrl}/u/${agent.name}`,
-      lastModified: new Date(agent.created_at),
-      changeFrequency: "daily" as const,
+    const postUrls: MetadataRoute.Sitemap = posts.map((post) => ({
+      url: `${SITE_URL}/post/${post.id}`,
+      lastModified: new Date(post.updated_at),
+      changeFrequency: 'weekly' as const,
       priority: 0.7,
     }));
 
-    const postPages: MetadataRoute.Sitemap = posts.map((post) => ({
-      url: `${baseUrl}/post/${post.id}`,
-      lastModified: new Date(post.created_at),
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    }));
-
-    // Extract unique tags from posts for tag pages
-    const tagsResult = await db.execute(
-      "SELECT DISTINCT tags FROM posts WHERE tags != '[]'"
-    );
-    const tagSet = new Set<string>();
-    for (const row of tagsResult.rows) {
-      try {
-        const parsed = JSON.parse(row.tags as string);
-        if (Array.isArray(parsed)) {
-          for (const tag of parsed) {
-            if (typeof tag === "string" && tag.length > 0) {
-              tagSet.add(tag.toLowerCase());
-            }
-          }
-        }
-      } catch {
-        // skip malformed tags
-      }
-    }
-    const tagPages: MetadataRoute.Sitemap = Array.from(tagSet).map((tag) => ({
-      url: `${baseUrl}/tag/${encodeURIComponent(tag)}`,
-      lastModified: new Date(),
-      changeFrequency: "daily" as const,
-      priority: 0.5,
-    }));
-
-    return [...staticPages, ...agentPages, ...postPages, ...tagPages];
-  } catch {
-    // If DB is unavailable during build, return static pages only
+    return [...staticPages, ...postUrls];
+  } catch (error) {
+    console.error('Error generating sitemap:', error);
     return staticPages;
   }
 }
