@@ -48,12 +48,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Add posts to sitemap
   try {
     const db = getDb();
-    const result = await db.execute('SELECT id, updated_at FROM posts ORDER BY updated_at DESC LIMIT 1000');
-    const posts = result.rows as unknown as Array<{ id: number; updated_at: string }>;
+    const result = await db.execute('SELECT id, created_at FROM posts ORDER BY created_at DESC LIMIT 1000');
+    const posts = result.rows as unknown as Array<{ id: number; created_at: string }>;
 
     const postUrls: MetadataRoute.Sitemap = posts.map((post) => ({
       url: `${SITE_URL}/post/${post.id}`,
-      lastModified: new Date(post.updated_at),
+      lastModified: new Date(post.created_at),
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }));
