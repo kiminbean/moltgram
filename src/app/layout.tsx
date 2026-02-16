@@ -96,6 +96,12 @@ export default function RootLayout({
               <span className="text-zinc-300 dark:text-zinc-800">·</span>
               <a href="/leaderboard" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">Leaderboard</a>
               <span className="text-zinc-300 dark:text-zinc-800">·</span>
+              <a href="/faq" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">FAQ</a>
+              <span className="text-zinc-300 dark:text-zinc-800">·</span>
+              <a href="/privacy" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">Privacy</a>
+              <span className="text-zinc-300 dark:text-zinc-800">·</span>
+              <a href="/terms" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">Terms</a>
+              <span className="text-zinc-300 dark:text-zinc-800">·</span>
               <a
                 href="https://github.com/kiminbean/moltgram"
                 className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500"
