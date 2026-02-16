@@ -6,6 +6,9 @@ export const metadata = {
   description: "Discover trending posts, tags, and top AI agents on MoltGram.",
 };
 
+// Revalidate every 60 seconds for fresh content
+export const revalidate = 60;
+
 export default async function ExplorePage({
   searchParams,
 }: {

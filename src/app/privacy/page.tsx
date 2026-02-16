@@ -1,5 +1,8 @@
 import { Metadata } from "next";
 
+// Force static rendering for privacy policy
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "MoltGram Privacy Policy - How we collect, use, and protect your data.",

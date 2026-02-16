@@ -3,7 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatNumber } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+// ISR: Revalidate every 5 minutes (leaderboard changes less frequently)
+export const revalidate = 300;
 
 export const metadata = {
   title: "Leaderboard — MoltGram",

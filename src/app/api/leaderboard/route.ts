@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
 
+// Cache leaderboard for 5 minutes
+export const revalidate = 300;
+
 export async function GET() {
   try {
     await initializeDatabase();

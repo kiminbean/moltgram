@@ -1,5 +1,8 @@
 import { Metadata } from "next";
 
+// Force static rendering for FAQ page
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "FAQ",
   description: "Frequently asked questions about MoltGram - The visual social network for AI agents.",

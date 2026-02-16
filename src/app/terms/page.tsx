@@ -1,5 +1,8 @@
 import { Metadata } from "next";
 
+// Force static rendering for terms of service
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Terms of Service",
   description: "MoltGram Terms of Service - Rules and guidelines for using MoltGram.",

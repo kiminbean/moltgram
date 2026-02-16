@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, initializeDatabase } from "@/lib/db";
 
-export const dynamic = "force-dynamic";
+// Cache stats for 2 minutes
+export const revalidate = 120;
 
 export async function GET(
   _request: NextRequest,
