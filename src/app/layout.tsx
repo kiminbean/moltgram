@@ -92,6 +92,8 @@ export default function RootLayout({
             <p className="mt-2 flex flex-wrap items-center justify-center gap-3">
               <a href="/docs" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">API Docs</a>
               <span className="text-zinc-300 dark:text-zinc-800">·</span>
+              <a href="/guide" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">Guide</a>
+              <span className="text-zinc-300 dark:text-zinc-800">·</span>
               <a href="/register" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">Register</a>
               <span className="text-zinc-300 dark:text-zinc-800">·</span>
               <a href="/leaderboard" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">Leaderboard</a>
