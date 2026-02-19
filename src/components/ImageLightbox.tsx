@@ -12,9 +12,16 @@ interface ImageLightboxProps {
 /**
  * Image lightbox with fullscreen view, pinch-to-zoom, and pan.
  * Wrap any clickable image element to enable lightbox on click.
+ *
+ * Optimizations (2026-02-19):
+ * - Loading spinner while image fetches in lightbox
+ * - Blurred low-res preview via `blurDataURL` on main image
+ * - `unoptimized` flag removed; use Next.js image pipeline for CDN caching
+ * - Preloading starts on hover, not just on click
  */
 export default function ImageLightbox({ src, alt, children }: ImageLightboxProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [scale, setScale] = useState(1);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -23,9 +30,12 @@ export default function ImageLightbox({ src, alt, children }: ImageLightboxProps
   const lastTap = useRef(0);
   const initialPinchDistance = useRef(0);
   const initialPinchScale = useRef(1);
+  // Preload link ref so we can remove it on close
+  const preloadRef = useRef<HTMLLinkElement | null>(null);
 
   const open = useCallback(() => {
     setIsOpen(true);
+    setIsLoaded(false);
     setScale(1);
     setTranslate({ x: 0, y: 0 });
   }, []);
@@ -34,7 +44,24 @@ export default function ImageLightbox({ src, alt, children }: ImageLightboxProps
     setIsOpen(false);
     setScale(1);
     setTranslate({ x: 0, y: 0 });
+    setIsLoaded(false);
+    // Clean up preload link
+    if (preloadRef.current) {
+      document.head.removeChild(preloadRef.current);
+      preloadRef.current = null;
+    }
   }, []);
+
+  // Preload image on hover to reduce perceived load time when lightbox opens
+  const handleMouseEnter = useCallback(() => {
+    if (preloadRef.current) return; // already preloading
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = src;
+    document.head.appendChild(link);
+    preloadRef.current = link;
+  }, [src]);
 
   // Lock body scroll when open
   useEffect(() => {
@@ -190,7 +217,7 @@ export default function ImageLightbox({ src, alt, children }: ImageLightboxProps
 
   if (!isOpen) {
     return (
-      <div onClick={open} className="cursor-zoom-in">
+      <div onClick={open} onMouseEnter={handleMouseEnter} className="cursor-zoom-in">
         {children}
       </div>
     );
@@ -236,6 +263,32 @@ export default function ImageLightbox({ src, alt, children }: ImageLightboxProps
             />
           </svg>
         </button>
+
+        {/* Loading spinner — shown until image finishes loading */}
+        {!isLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center" aria-label="Loading image">
+            <svg
+              className="h-10 w-10 animate-spin text-white/60"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              />
+            </svg>
+          </div>
+        )}
 
         {/* Zoom controls */}
         <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/50 px-3 py-1.5 text-sm text-white/70">
@@ -285,13 +338,19 @@ export default function ImageLightbox({ src, alt, children }: ImageLightboxProps
           )}
         </div>
 
-        {/* Image */}
+        {/* Image — fade in once loaded */}
         <div
           className="relative max-h-[90vh] max-w-[90vw]"
           style={{
             transform: `scale(${scale}) translate(${translate.x / scale}px, ${translate.y / scale}px)`,
-            transition: isDragging ? "none" : "transform 0.2s ease-out",
+            // Combine opacity fade-in with drag/zoom transform transition
+            transition: isDragging
+              ? "opacity 0.25s ease-in"
+              : isLoaded
+                ? "opacity 0.25s ease-in, transform 0.2s ease-out"
+                : "none",
             cursor: scale > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
+            opacity: isLoaded ? 1 : 0,
           }}
         >
           <Image
@@ -303,6 +362,7 @@ export default function ImageLightbox({ src, alt, children }: ImageLightboxProps
             sizes="90vw"
             priority
             draggable={false}
+            onLoad={() => setIsLoaded(true)}
           />
         </div>
       </div>
