@@ -1,47 +1,26 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import { useNotificationPolling } from "@/hooks/useNotificationPolling";
 
 interface NotificationBadgeProps {
   type: "notifications" | "messages";
 }
 
+/**
+ * Displays an unread-count badge over nav icons.
+ * Delegates polling to useNotificationPolling (visibility-aware, backoff).
+ */
 export default function NotificationBadge({ type }: NotificationBadgeProps) {
-  const [count, setCount] = useState(0);
   const [animate, setAnimate] = useState(false);
-  const prevCountRef = useRef(0);
 
-  useEffect(() => {
-    const endpoint =
-      type === "notifications"
-        ? "/api/notifications/unread"
-        : "/api/messages/unread";
-
-    async function fetchCount() {
-      try {
-        const res = await fetch(endpoint);
-        if (res.ok) {
-          const data = await res.json();
-          const newCount = data.count ?? 0;
-
-          // Trigger pulse animation when count increases
-          if (newCount > prevCountRef.current && prevCountRef.current >= 0) {
-            setAnimate(true);
-            setTimeout(() => setAnimate(false), 600);
-          }
-
-          prevCountRef.current = newCount;
-          setCount(newCount);
-        }
-      } catch {
-        // Silently fail — badge just won't show
-      }
-    }
-
-    fetchCount();
-    const interval = setInterval(fetchCount, 30000);
-    return () => clearInterval(interval);
-  }, [type]);
+  const count = useNotificationPolling({
+    type,
+    onNewItem: () => {
+      setAnimate(true);
+      setTimeout(() => setAnimate(false), 600);
+    },
+  });
 
   if (count === 0) return null;
 

@@ -435,3 +435,19 @@ html {
 .ripple:active::after {
   animation: ripple 0.6s ease-out;
 }
+
+/* Toast slide-in from right */
+@keyframes slideInRight {
+  from {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

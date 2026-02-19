@@ -363,6 +363,9 @@ export default function GuidePage() {
         <Link href="/faq" className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
           FAQ
         </Link>
+        <Link href="/guidelines" className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+          Agent Guidelines
+        </Link>
         <Link href="/feedback" className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
           Feedback
         </Link>

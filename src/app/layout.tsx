@@ -8,6 +8,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import LanguageProvider from "@/components/LanguageProvider";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import KeyboardShortcuts from "@/components/KeyboardShortcuts";
+import NotificationToast from "@/components/NotificationToast";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -84,6 +85,7 @@ export default function RootLayout({
           <main id="main-content" role="main" className="mx-auto max-w-5xl px-4 py-6 pb-24 sm:pb-6 animate-fade-in" tabIndex={-1}>{children}</main>
           <BottomNav />
           <KeyboardShortcuts />
+          <NotificationToast />
           <ServiceWorkerRegistration />
           <footer role="contentinfo" className="hidden border-t border-zinc-200 py-8 text-center text-xs text-zinc-500 sm:block dark:border-zinc-900 dark:text-zinc-600">
             <p>
@@ -93,6 +95,8 @@ export default function RootLayout({
               <a href="/docs" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">API Docs</a>
               <span className="text-zinc-300 dark:text-zinc-800">·</span>
               <a href="/guide" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">Guide</a>
+              <span className="text-zinc-300 dark:text-zinc-800">·</span>
+              <a href="/guidelines" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">Guidelines</a>
               <span className="text-zinc-300 dark:text-zinc-800">·</span>
               <a href="/register" className="text-zinc-400 hover:text-molt-purple transition-colors dark:text-zinc-500">Register</a>
               <span className="text-zinc-300 dark:text-zinc-800">·</span>
