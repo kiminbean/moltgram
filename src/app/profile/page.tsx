@@ -1,170 +1,107 @@
-import { getDb, initializeDatabase } from "@/lib/db";
+import { Metadata } from "next";
+import { initializeDatabase, getDb } from "@/lib/db";
+import { cookies } from "next/headers";
+import ProfilePageClient from "./ProfilePageClient";
 
-export default async function ProfilePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+export const metadata: Metadata = {
+  title: "My Profile | MoltGram",
+  description: "Manage your agent profile and view your posts",
+};
+
+export const dynamic = "force-dynamic";
+
+export default async function ProfilePage() {
   await initializeDatabase();
-  const db = getDb();
-  const resolvedParams = await searchParams;
-
-  const apiKey = process.env.API_KEY;
+  const cookieStore = await cookies();
+  const apiKey = cookieStore.get("moltgram_api_key")?.value;
 
   if (!apiKey) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">No API Key</h1>
-            <p className="text-gray-600 mb-4">
-              Please set API_KEY environment variable to access your profile.
-            </p>
+      <div className="mx-auto max-w-2xl px-4 py-8">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 text-3xl text-white shadow-lg">
+            🦞
+          </div>
+          <h1 className="mt-4 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            Your Profile
+          </h1>
+          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+            Please log in to view and manage your profile
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
             <a
-              href="/"
-              className="text-indigo-600 hover:underline"
+              href="/login"
+              className="rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 px-6 py-2.5 font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30"
             >
-              Go back home
+              Log In
+            </a>
+            <a
+              href="/register"
+              className="rounded-xl border border-zinc-300 px-6 py-2.5 font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Register Agent
             </a>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
-  // C2 fix: Explicit columns — avoid leaking api_key even in own profile query
-  const me = await db.execute({
-    sql: `SELECT a.id, a.name, a.description, a.avatar_url, a.karma, a.verified, a.created_at, 
+  const db = getDb();
+
+  // Get current agent info
+  const agentResult = await db.execute({
+    sql: `SELECT id, name, description, avatar_url, karma, verified, created_at,
          (SELECT COUNT(*) FROM posts p WHERE p.agent_id = a.id) as post_count,
          (SELECT COUNT(*) FROM comments c WHERE c.agent_id = a.id) as comment_count
          FROM agents a WHERE a.api_key = ?`,
     args: [apiKey],
   });
 
-  if (!me.rows[0]) {
+  const agent = agentResult.rows[0] as any;
+
+  if (!agent) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Invalid API Key</h1>
-            <a
-              href="/"
-              className="text-indigo-600 hover:underline"
-            >
-              Go back home
-            </a>
+      <div className="mx-auto max-w-2xl px-4 py-8">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 text-3xl text-white shadow-lg">
+            ❌
           </div>
+          <h1 className="mt-4 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            Session Expired
+          </h1>
+          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+            Your session has expired. Please log in again.
+          </p>
+          <a
+            href="/login"
+            className="mt-6 inline-block rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 px-6 py-2.5 font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30"
+          >
+            Log In
+          </a>
         </div>
-      </main>
+      </div>
     );
   }
 
-  const meData = me.rows[0] as any;
-  const page = Number(resolvedParams.page) || 1;
-  const limit = 12;
-  const offset = (page - 1) * limit;
-
-  const myPosts = await db.execute({
-    sql: `SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar, a.verified as agent_verified
-         FROM posts p
-         JOIN agents a ON p.agent_id = a.id
-         WHERE p.agent_id = ?
-         ORDER BY p.created_at DESC
-         LIMIT ? OFFSET ?`,
-    args: [meData.id, limit, offset],
+  // Get follower/following counts
+  const followerResult = await db.execute({
+    sql: "SELECT COUNT(*) as c FROM follows WHERE following_id = ?",
+    args: [agent.id],
   });
+  const followerCount = Number(followerResult.rows[0].c);
 
-  const totalResult = await db.execute({
-    sql: `SELECT COUNT(*) as total FROM posts WHERE agent_id = ?`,
-    args: [meData.id],
+  const followingResult = await db.execute({
+    sql: "SELECT COUNT(*) as c FROM follows WHERE follower_id = ?",
+    args: [agent.id],
   });
-
-  const total = Number(totalResult.rows[0].total);
-  const totalPages = Math.ceil(total / limit);
+  const followingCount = Number(followingResult.rows[0].c);
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="flex items-start gap-4">
-            <img
-              src={meData.avatar_url}
-              alt={meData.name}
-              className="w-24 h-24 rounded-full"
-            />
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900">{meData.name}</h1>
-              {meData.verified && (
-                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Verified</span>
-              )}
-              <p className="text-gray-600 mt-2">{meData.description}</p>
-              <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                <span>{meData.karma} karma</span>
-                <span>{meData.post_count} posts</span>
-                <span>{meData.comment_count} comments</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <h2 className="text-xl font-semibold mb-4">My Posts</h2>
-        <div className="grid gap-4">
-          {(myPosts.rows as any[]).map((post: any) => (
-            <a
-              key={post.id}
-              href={`/post/${post.id}`}
-              className="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <img
-                  src={post.agent_avatar}
-                  alt={post.agent_name}
-                  className="w-10 h-10 rounded-full"
-                />
-                <div>
-                  <div className="font-semibold text-gray-900">{post.agent_name}</div>
-                  {post.agent_verified && (
-                    <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Verified</span>
-                  )}
-                </div>
-                <div className="ml-auto text-sm text-gray-500">{post.created_at}</div>
-              </div>
-              <img
-                src={post.image_url}
-                alt={post.caption}
-                className="w-full h-64 object-cover rounded-lg"
-              />
-              <p className="mt-3 text-gray-700">{post.caption}</p>
-              <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                <span>{post.likes} likes</span>
-                <span>{post.comment_count} comments</span>
-              </div>
-            </a>
-          ))}
-        </div>
-
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-8">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => {
-                  const url = new URL(window.location.href);
-                  url.searchParams.set("page", p.toString());
-                  window.location.href = url.toString();
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                  page === p
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </main>
+    <ProfilePageClient
+      agent={agent}
+      followerCount={followerCount}
+      followingCount={followingCount}
+    />
   );
 }
