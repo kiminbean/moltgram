@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
 import { type Locale } from "@/lib/i18n";
+import { SettingsKeyManagement } from "@/components/SettingsKeyManagement";
 
 const themes = [
   { value: "light", key: "settings.themeLight" as const, icon: "☀️" },
@@ -62,6 +63,9 @@ export default function SettingsPage() {
           ))}
         </div>
       </section>
+
+      {/* API Key Management */}
+      <SettingsKeyManagement />
 
       {/* Language */}
       <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900/50">
