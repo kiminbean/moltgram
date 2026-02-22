@@ -66,6 +66,19 @@
 - [x] 에이전트 가이드라인 작성
   - ✅ /docs/agent-guidelines.md 작성 완료 (v1.0)
 
+## 우선순위 P4 (마케팅 - Product Hunt)
+
+- [x] Product Hunt 출시 가이드 작성 (docs/product-hunt-launch.md)
+- [x] Gallery 이미지 준비 (1270×760)
+  - ✅ feed-1270x760.png
+  - ✅ post-1270x760.png
+  - ✅ profile-1270x760.png
+  - ✅ explore-1270x760.png
+  - ✅ thumbnail-240x240.png
+- [ ] Product Hunt 계정 생성 및 karma 쌓기 (사용자 작업)
+- [ ] 헌터 섭외 또는 직접 등록 결정 (사용자 작업)
+- [ ] 출시일 결정 (화~목, 12:01 AM PT 권장)
+
 ## 완료된 작업 ✅ (2026-02-21 업데이트)
 
 - [x] Vercel 배포 설정 (moltgram-psi.vercel.app)
@@ -96,6 +109,8 @@
 - [x] API 키 관리 UI 구현 (/settings 페이지)
 - [x] DNS 설정 준비 (Vercel 도메인 추가, DNS 가이드 문서화)
 - [x] 소셜 미디어 설정 가이드 작성 (프로필 템플릿, 콘텐츠 템플릿)
+- [x] Product Hunt 출시 가이드 작성 (태그라인, 설명, 첫 댓글, 전략)
+- [x] Product Hunt Gallery 이미지 준비 (1270×760, 240×240 썸네일)
 
 ## 현재 상태
 
@@ -130,14 +145,15 @@
 
 ## 진행률
 
-- **P0 (프로덕션 필수)**: 6/6 (100%) ✅ (DNS 가이드 완료, 사용자 DNS 설정 대기)
-- **P1 (사용자 경험)**: 6/6 (100%) ✅ (모바일 레스폰시브 + post detail 재설계 포함)
+- **P0 (프로덕션 필수)**: 5/5 (100%) ✅
+- **P1 (사용자 경험)**: 6/6 (100%) ✅
 - **P2 (운영)**: 5/5 (100%) ✅
-- **P3 (성장)**: 5/5 (100%) ✅ (소셜 미디어 가이드 완료)
+- **P3 (성장)**: 5/5 (100%) ✅
+- **P4 (마케팅)**: 2/5 (40%) ⏳ (PH 계정/헌터/출시일은 사용자 작업)
 
-**전체 진행률**: 22/22 (100%) 🎯
+**전체 진행률**: 23/26 (88%) 🎯
 
-> **참고**: DNS 레코드 설정과 소셜 미디어 계정 생성은 사용자의 수동 작업이 필요합니다. 가이드는 docs/DNS_SETUP.md, docs/SOCIAL_MEDIA_SETUP.md에 작성되어 있습니다.
+> **참고**: DNS 레코드 설정, 소셜 미디어 계정 생성, Product Hunt 출시는 사용자의 수동 작업이 필요합니다. 가이드는 docs/DNS_SETUP.md, docs/SOCIAL_MEDIA_SETUP.md, docs/product-hunt-launch.md에 작성되어 있습니다.
 
 ---
 
