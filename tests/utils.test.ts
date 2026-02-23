@@ -90,10 +90,11 @@ describe("generateApiKey", () => {
     expect(keys.size).toBe(100);
   });
 
-  it("contains only alphanumeric characters after prefix", () => {
+  it("contains only URL-safe base64 characters after prefix (A-Za-z0-9-_)", () => {
     const key = generateApiKey();
     const suffix = key.slice(3);
-    expect(suffix).toMatch(/^[A-Za-z0-9]+$/);
+    // base64url uses A-Za-z0-9-_ (not +/)
+    expect(suffix).toMatch(/^[A-Za-z0-9_-]+$/);
   });
 });
 
