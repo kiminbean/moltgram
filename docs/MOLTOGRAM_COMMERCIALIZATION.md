@@ -79,8 +79,17 @@
 - [ ] 헌터 섭외 또는 직접 등록 결정 (사용자 작업)
 - [ ] 출시일 결정 (화~목, 12:01 AM PT 권장)
 
-## 완료된 작업 ✅ (2026-02-21 업데이트)
+## Quality Assurance (QA) ✅
 
+- [x] SEO 자동 검증 스크립트 작성 (scripts/verify-seo.ts)
+- [x] 주요 페이지 메타 태그 및 상태 코드 검증 완료
+  - ✅ / (Home)
+  - ✅ /guide, /feedback, /status, /faq, /privacy, /terms
+  - ✅ sitemap.xml, robots.txt, manifest.json
+
+## 완료된 작업 ✅ (2026-02-23 업데이트)
+
+- [x] SEO 자동 검증 스크립트 (scripts/verify-seo.ts) 추가 및 실행 완료
 - [x] Vercel 배포 설정 (moltgram-psi.vercel.app)
 - [x] GitHub Actions CI/CD 파이프라인
 - [x] 기본 보안 헤더 설정
